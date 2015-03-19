@@ -17,7 +17,7 @@ public abstract class Thenable
             @Override public final void resolve(final Object v) { resP.resolve(v); }
 
             @Override public final void resolve(final Object v1, final Object v2) {
-                resP.resolve(PS.v(v1, v2));
+                resP.resolve(Promises.v(v1, v2));
             }
         };
     }
@@ -28,7 +28,7 @@ public abstract class Thenable
             @Override public final void resolve(final Object v) { resP.resolve(v); }
 
             @Override public final void resolve(final Object v1, final Object v2, final Object v3) {
-                resP.resolve(PS.v(v1, v2, v3));
+                resP.resolve(Promises.v(v1, v2, v3));
             }
         };
     }
@@ -39,7 +39,7 @@ public abstract class Thenable
             @Override public final void resolve(final Object v) { resP.resolve(v); }
 
             @Override public final void resolve(final Object v1, final Object v2, final Object v3, final Object v4) {
-                resP.resolve(PS.v(v1, v2, v3, v4));
+                resP.resolve(Promises.v(v1, v2, v3, v4));
             }
         };
     }
@@ -51,7 +51,7 @@ public abstract class Thenable
 
             @Override public final void
             resolve(final Object v1, final Object v2, final Object v3, final Object v4, final Object v5) {
-                resP.resolve(PS.v(v1, v2, v3, v4, v5));
+                resP.resolve(Promises.v(v1, v2, v3, v4, v5));
             }
         };
     }
@@ -60,11 +60,11 @@ public abstract class Thenable
     {
         return new RejectPromise2() {
             @Override public final void reject(final Object r1, final Object r2, final Throwable e) {
-                rejP.reject(PS.v(r1, r2), e);
+                rejP.reject(Promises.v(r1, r2), e);
             }
 
             @Override public final void reject(final Object r1, final Object r2) {
-                rejP.reject(PS.v(r1, r2));
+                rejP.reject(Promises.v(r1, r2));
             }
 
             @Override public final void reject(final Throwable e) {
@@ -77,11 +77,11 @@ public abstract class Thenable
     {
         return new RejectPromise3() {
             @Override public final void reject(final Object r1, final Object r2, final Object r3, final Throwable e) {
-                rejP.reject(PS.v(r1, r2, r3), e);
+                rejP.reject(Promises.v(r1, r2, r3), e);
             }
 
             @Override public final void reject(final Object r1, final Object r2, final Object r3) {
-                rejP.reject(PS.v(r1, r2, r3));
+                rejP.reject(Promises.v(r1, r2, r3));
             }
 
             @Override public final void reject(final Throwable e) {
@@ -95,11 +95,11 @@ public abstract class Thenable
         return new RejectPromise4() {
             @Override public final void
             reject(final Object r1, final Object r2, final Object r3, final Object r4, final Throwable e) {
-                rejP.reject(PS.v(r1, r2, r3, r4), e);
+                rejP.reject(Promises.v(r1, r2, r3, r4), e);
             }
 
             @Override public final void reject(final Object r1, final Object r2, final Object r3, final Object r4) {
-                rejP.reject(PS.v(r1, r2, r3, r4));
+                rejP.reject(Promises.v(r1, r2, r3, r4));
             }
 
             @Override public final void reject(final Throwable e) {
@@ -119,12 +119,12 @@ public abstract class Thenable
                 final Object r5,
                 final Throwable e
             ) {
-                rejP.reject(PS.v(r1, r2, r3, r4, r5), e);
+                rejP.reject(Promises.v(r1, r2, r3, r4, r5), e);
             }
 
             @Override public final void
             reject(final Object r1, final Object r2, final Object r3, final Object r4, final Object r5) {
-                rejP.reject(PS.v(r1, r2, r3, r4, r5));
+                rejP.reject(Promises.v(r1, r2, r3, r4, r5));
             }
 
             @Override public final void reject(final Throwable e) {

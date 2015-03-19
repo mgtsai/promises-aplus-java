@@ -6,7 +6,6 @@
 package promises.impl;
 import promises.FR1;
 import promises.FR2;
-
 import java.util.concurrent.Executor;
 //---------------------------------------------------------------------------------------------------------------------
 abstract class ResolutionSupplier
@@ -15,35 +14,35 @@ abstract class ResolutionSupplier
     final Executor exec;
     //-----------------------------------------------------------------------------------------------------------------
     static <V> ResolutionSupplier byOnFullfilled(
-        final AbstractPromise<V, ?> promise,
+        final BasePromiseImpl promise,
         final Executor exec,
-        final FR1<? super V, ?> onFulfilled,
+        final FR1<V, ?> onFulfilled,
         final int stackDiff
     ) {
         if (onFulfilled == null)
             return null;
 
         return new ResolutionSupplier(exec) { @Override final Object resValue() throws Throwable {
-            return onFulfilled.call(promise.value());
+            return onFulfilled.call(ImplUtil.<V>cast(promise.getValue()));
         }};
     }
     //-----------------------------------------------------------------------------------------------------------------
     static <R> ResolutionSupplier byOnRejected(
-        final AbstractPromise<?, R> promise,
+        final BasePromiseImpl promise,
         final Executor exec,
-        final FR2<? super R, Throwable, ?> onRejected,
+        final FR2<R, Throwable, ?> onRejected,
         final int stackDiff
     ) {
         if (onRejected == null)
             return null;
 
         return new ResolutionSupplier(exec) { @Override final Object resValue() throws Throwable {
-            return onRejected.call(promise.reason(), promise.exception());
+            return onRejected.call(ImplUtil.<R>cast(promise.getReason()), promise.exception());
         }};
     }
     //-----------------------------------------------------------------------------------------------------------------
     static ResolutionSupplier byOnRejected(
-        final AbstractPromise<?, ?> promise,
+        final BasePromiseImpl promise,
         final Executor exec,
         final FR1<Throwable, ?> onRejected,
         final int stackDiff

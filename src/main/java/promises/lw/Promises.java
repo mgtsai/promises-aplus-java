@@ -14,13 +14,13 @@ import promises.M2;
 import promises.M3;
 import promises.M4;
 import promises.M5;
-import promises.impl.PromiseFactory;
+import promises.impl.LightWeightPromiseImpl;
 import java.util.concurrent.Executor;
 //---------------------------------------------------------------------------------------------------------------------
 /**
  * Defines static methods for manipulating promise stuffs with LightWeight Style.
  */
-public class PS
+public class Promises
 {
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -100,7 +100,7 @@ public class PS
      */
     public static <V> P<V> pf(final V v)
     {
-        return PromiseFactory.fulfilledPromise(v);
+        return LightWeightPromiseImpl.<V>factory().fulfilledPromise(v);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -112,7 +112,7 @@ public class PS
      */
     public static <V1, V2> P<M2<V1, V2>> pf(final V1 v1, final V2 v2)
     {
-        return PromiseFactory.fulfilledPromise(new M2<V1, V2>(v1, v2));
+        return pf(new M2<V1, V2>(v1, v2));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -125,7 +125,7 @@ public class PS
      */
     public static <V1, V2, V3> P<M3<V1, V2, V3>> pf(final V1 v1, final V2 v2, final V3 v3)
     {
-        return PromiseFactory.fulfilledPromise(new M3<V1, V2, V3>(v1, v2, v3));
+        return pf(new M3<V1, V2, V3>(v1, v2, v3));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -139,7 +139,7 @@ public class PS
      */
     public static <V1, V2, V3, V4> P<M4<V1, V2, V3, V4>> pf(final V1 v1, final V2 v2, final V3 v3, final V4 v4)
     {
-        return PromiseFactory.fulfilledPromise(new M4<V1, V2, V3, V4>(v1, v2, v3, v4));
+        return pf(new M4<V1, V2, V3, V4>(v1, v2, v3, v4));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -155,22 +155,7 @@ public class PS
     public static <V1, V2, V3, V4, V5> P<M5<V1, V2, V3, V4, V5>>
     pf(final V1 v1, final V2 v2, final V3 v3, final V4 v4, final V5 v5)
     {
-        return PromiseFactory.fulfilledPromise(new M5<V1, V2, V3, V4, V5>(v1, v2, v3, v4, v5));
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    /**
-     * Wraps the specified single-argument {@code onFulfilled} callback to a single aggregated-argument callback.
-     *
-     * @param onFulfilled The single-argument {@code onFulfilled} callback to be wrapped
-     * @return The wrapper callback
-     */
-    public static <VI, VO> OnFul<VI, VO> wf(final FR1<? super VI, ? extends RV<? extends VO>> onFulfilled)
-    {
-        return new OnFul<VI, VO>() {
-            @Override public final RV<? extends VO> call(final VI v) throws Throwable {
-                return onFulfilled.call(v);
-            }
-        };
+        return pf(new M5<V1, V2, V3, V4, V5>(v1, v2, v3, v4, v5));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**

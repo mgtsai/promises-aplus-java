@@ -4,6 +4,7 @@
 // found at http://www.apache.org/licenses/LICENSE-2.0
 //---------------------------------------------------------------------------------------------------------------------
 package promises.lw;
+import promises.FR1;
 import promises.PromiseRejectedException;
 import promises.PromiseState;
 import java.util.concurrent.Executor;
@@ -80,8 +81,11 @@ public interface P<V> extends RV<V>
      * @param onRejected The {@code onRejected} callback being invoked when this promise is rejected
      * @return The next chained promise
      */
-    public abstract <VO> P<VO>
-    then(final Executor exec, final OnFul<? super V, VO> onFulfilled, final OnRej<VO> onRejected);
+    public abstract <VO> P<VO> then(
+        final Executor exec,
+        final FR1<? super V, ? extends RV<? extends VO>> onFulfilled,
+        final FR1<Throwable, ? extends RV<? extends VO>> onRejected
+    );
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * The {@code then} method without {@code onRejected} callback by using the specified executor.
@@ -90,7 +94,7 @@ public interface P<V> extends RV<V>
      * @param onFulfilled The {@code onFulfilled} callback being invoked when this promise is fulfilled
      * @return The next chained promise
      */
-    public abstract <VO> P<VO> then(final Executor exec, final OnFul<? super V, VO> onFulfilled);
+    public abstract <VO> P<VO> then(final Executor exec, final FR1<? super V, ? extends RV<? extends VO>> onFulfilled);
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * The {@code then} method with {@code onRejected} callback by using the current-thread executor.
@@ -99,7 +103,10 @@ public interface P<V> extends RV<V>
      * @param onRejected The {@code onRejected} callback being invoked when this promise is rejected
      * @return The next chained promise
      */
-    public abstract <VO> P<VO> then(final OnFul<? super V, VO> onFulfilled, final OnRej<VO> onRejected);
+    public abstract <VO> P<VO> then(
+        final FR1<? super V, ? extends RV<? extends VO>> onFulfilled,
+        final FR1<Throwable, ? extends RV<? extends VO>> onRejected
+    );
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * The {@code then} method without {@code onRejected} callback by using the current-thread executor.
@@ -107,7 +114,7 @@ public interface P<V> extends RV<V>
      * @param onFulfilled The {@code onFulfilled} callback being invoked when this promise is fulfilled
      * @return The next chained promise
      */
-    public abstract <VO> P<VO> then(final OnFul<? super V, VO> onFulfilled);
+    public abstract <VO> P<VO> then(final FR1<? super V, ? extends RV<? extends VO>> onFulfilled);
     //-----------------------------------------------------------------------------------------------------------------
 }
 //---------------------------------------------------------------------------------------------------------------------

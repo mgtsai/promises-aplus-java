@@ -12,95 +12,73 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 //---------------------------------------------------------------------------------------------------------------------
-final class MutablePromise<V, R> extends AbstractPromise<V, R>
+final class PromiseStore
 {
     //-----------------------------------------------------------------------------------------------------------------
     private final CountDownLatch waitUntilResolved = new CountDownLatch(1);
-    private PromiseState state = PromiseState.PENDING;
-    private V value = null;
-    private R reason = null;
-    private Throwable exception = null;
-    private boolean inSyncIsAlwaysPending = false;
-    private TaskQueue onFulfilledTaskQ = new TaskQueue();
-    private TaskQueue onRejectedTaskQ = new TaskQueue();
+    PromiseState state = PromiseState.PENDING;
+    Object value = null;
+    Object reason = null;
+    Throwable exception = null;
+    boolean inSyncIsAlwaysPending = false;
+    private ArrayList<BaseTask> onFulfilledTaskQ = null;
+    private ArrayList<BaseTask> onRejectedTaskQ = null;
     //-----------------------------------------------------------------------------------------------------------------
-    @Override
-    public final PromiseState state()
-    {
-        return state;
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Override
-    public final V value()
-    {
-        return value;
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Override
-    public final R reason()
-    {
-        return reason;
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Override
-    public final Throwable exception()
-    {
-        return exception;
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Override
-    public final V await() throws PromiseRejectedException, InterruptedException
+    final Object doAwait() throws InterruptedException, PromiseRejectedException
     {
         waitUntilResolved.await();
-
         final PromiseState state = this.state;
 
         switch (state) {
         case FULFILLED:
             return value;
-
         case REJECTED:
             throw new PromiseRejectedException(this, reason, exception);
-
         default:
             throw new InternalException("Invalid state %s for this resolved promise", state);
         }
     }
     //-----------------------------------------------------------------------------------------------------------------
-    @Override
-    public final V await(final long timeout, final TimeUnit unit)
+    final Object doAwait(final long timeout, final TimeUnit unit)
         throws PromiseRejectedException, InterruptedException, TimeoutException
     {
         waitUntilResolved.await(timeout, unit);
-
         final PromiseState state = this.state;
 
         switch (state) {
         case PENDING:
             throw new TimeoutException("Timeout is reached for waiting this promise being resolved");
-
         case FULFILLED:
             return value;
-
         case REJECTED:
             throw new PromiseRejectedException(this, reason, exception);
-
         default:
             throw new InternalException("Invalid state %s for this resolved promise", state);
         }
     }
     //-----------------------------------------------------------------------------------------------------------------
-    @Override
-    final boolean inSyncIsAlwaysPending()
+    final synchronized <P extends BasePromiseImpl> P promiseInterface(final PromiseFactory<P> factory)
     {
-        return inSyncIsAlwaysPending;
+        if (inSyncIsAlwaysPending)
+            return factory.alwaysPendingPromise();
+
+        switch (state) {
+        case PENDING:
+            return factory.pendingPromise(this);
+        case FULFILLED:
+            return factory.fulfilledPromise(value);
+        case REJECTED:
+            return factory.rejectedPromise(reason, exception);
+        default:
+            throw new InternalException("Invalid state %s for specifying promise interface", state);
+        }
     }
     //-----------------------------------------------------------------------------------------------------------------
     final void setAlwaysPending()
     {
-        synchronized (super.syncLock) {
+        synchronized (this) {
             if (state != PromiseState.PENDING)
-                throw new InternalException("Unalways setting always pending after this promise is resolved.");
+                throw new InternalException("Not allowed setting always pending after this promise is resolved.");
 
             if (inSyncIsAlwaysPending)
                 return;
@@ -108,75 +86,76 @@ final class MutablePromise<V, R> extends AbstractPromise<V, R>
             inSyncIsAlwaysPending = true;
         }
 
-        onFulfilledTaskQ.onAllTasksAlwaysPending();
-        onRejectedTaskQ.onAllTasksAlwaysPending();
-        onFulfilledTaskQ = onRejectedTaskQ = null;
+        if (onFulfilledTaskQ != null) {
+            for (final BaseTask task : onFulfilledTaskQ)
+                task.onAlwaysPending();
+            onFulfilledTaskQ = null;
+        }
+
+        if (onRejectedTaskQ != null) {
+            for (final BaseTask task : onRejectedTaskQ)
+                task.onAlwaysPending();
+            onRejectedTaskQ = null;
+        }
     }
     //-----------------------------------------------------------------------------------------------------------------
-    @Override final void
-    inSyncAppendTasksToPendingQueue(final BaseTask onFulfilledTask, final BaseTask onRejectedTask)
+    final void inSyncAppendTasksToPendingQueue(final BaseTask onFulfilledTask, final BaseTask onRejectedTask)
     {
         if (inSyncIsAlwaysPending)
             return;
 
+        if (onFulfilledTaskQ == null)
+            onFulfilledTaskQ = new ArrayList<BaseTask>();
         onFulfilledTaskQ.add(onFulfilledTask);
+
+        if (onRejectedTaskQ == null)
+            onRejectedTaskQ = new ArrayList<BaseTask>();
         onRejectedTaskQ.add(onRejectedTask);
     }
     //-----------------------------------------------------------------------------------------------------------------
-    final void doFulfill(final V value)
+    final void doFulfill(final Object value)
     {
-        final TaskQueue selectedTaskQ;
-
-        synchronized (super.syncLock) {
+        synchronized (this) {
             if (inSyncIsAlwaysPending)
                 throw new InternalException("Unexpected fulfilling this always-pending promise");
 
             this.state = PromiseState.FULFILLED;
             this.value = value;
-            selectedTaskQ = onFulfilledTaskQ;
 
             waitUntilResolved.countDown();
-            onFulfilledTaskQ = onRejectedTaskQ = null;
+            onRejectedTaskQ = null;
+
+            if (onFulfilledTaskQ == null)
+                return;
         }
 
-        selectedTaskQ.execAllTasks();
+        for (final BaseTask task : onFulfilledTaskQ)
+            task.doExec();
+
+        onFulfilledTaskQ = null;
     }
     //-----------------------------------------------------------------------------------------------------------------
-    final void doReject(final R reason, final Throwable exception)
+    final void doReject(final Object reason, final Throwable exception)
     {
-        final TaskQueue selectedTaskQ;
-
-        synchronized (super.syncLock) {
+        synchronized (this) {
             if (inSyncIsAlwaysPending)
                 throw new InternalException("Unexpected rejecting this always-pending promise");
 
             this.state = PromiseState.REJECTED;
             this.reason = reason;
             this.exception = exception;
-            selectedTaskQ = onRejectedTaskQ;
 
             waitUntilResolved.countDown();
-            onFulfilledTaskQ = onRejectedTaskQ = null;
+            onFulfilledTaskQ = null;
+
+            if (onRejectedTaskQ == null)
+                return;
         }
 
-        selectedTaskQ.execAllTasks();
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    private static final class TaskQueue extends ArrayList<BaseTask>
-    {
-        //-------------------------------------------------------------------------------------------------------------
-        final void onAllTasksAlwaysPending()
-        {
-            for (final BaseTask task : this)
-                task.onAlwaysPending();
-        }
-        //-------------------------------------------------------------------------------------------------------------
-        final void execAllTasks()
-        {
-            for (final BaseTask task : this)
-                task.doExec();
-        }
-        //-------------------------------------------------------------------------------------------------------------
+        for (final BaseTask task : onRejectedTaskQ)
+            task.doExec();
+
+        onRejectedTaskQ = null;
     }
     //-----------------------------------------------------------------------------------------------------------------
 }

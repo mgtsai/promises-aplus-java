@@ -16,13 +16,13 @@ import promises.M3;
 import promises.M4;
 import promises.M5;
 import promises.PromiseState;
-import promises.impl.PromiseFactory;
+import promises.impl.TypedPromiseImpl;
 import java.util.concurrent.Executor;
 //---------------------------------------------------------------------------------------------------------------------
 /**
  * Defines static methods for manipulating promise stuffs with Typed Style.
  */
-public class PS
+public class Promises
 {
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -183,7 +183,7 @@ public class PS
      */
     public static <V, R> Promise<V, R> pf(final V v)
     {
-        return PromiseFactory.fulfilledPromise(v);
+        return TypedPromiseImpl.<V, R>factory().fulfilledPromise(v);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -195,7 +195,7 @@ public class PS
      */
     public static <V1, V2, R> Promise<M2<V1, V2>, R> pf(final V1 v1, final V2 v2)
     {
-        return PromiseFactory.fulfilledPromise(new M2<V1, V2>(v1, v2));
+        return pf(new M2<V1, V2>(v1, v2));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -208,7 +208,7 @@ public class PS
      */
     public static <V1, V2, V3, R> Promise<M3<V1, V2, V3>, R> pf(final V1 v1, final V2 v2, final V3 v3)
     {
-        return PromiseFactory.fulfilledPromise(new M3<V1, V2, V3>(v1, v2, v3));
+        return pf(new M3<V1, V2, V3>(v1, v2, v3));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -223,7 +223,7 @@ public class PS
     public static <V1, V2, V3, V4, R> Promise<M4<V1, V2, V3, V4>, R>
     pf(final V1 v1, final V2 v2, final V3 v3, final V4 v4)
     {
-        return PromiseFactory.fulfilledPromise(new M4<V1, V2, V3, V4>(v1, v2, v3, v4));
+        return pf(new M4<V1, V2, V3, V4>(v1, v2, v3, v4));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -239,7 +239,7 @@ public class PS
     public static <V1, V2, V3, V4, V5, R> Promise<M5<V1, V2, V3, V4, V5>, R>
     pf(final V1 v1, final V2 v2, final V3 v3, final V4 v4, final V5 v5)
     {
-        return PromiseFactory.fulfilledPromise(new M5<V1, V2, V3, V4, V5>(v1, v2, v3, v4, v5));
+        return pf(new M5<V1, V2, V3, V4, V5>(v1, v2, v3, v4, v5));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -251,7 +251,7 @@ public class PS
      */
     public static <V, R> Promise<V, R> pr(final R r, final Throwable e)
     {
-        return PromiseFactory.rejectedPromise(r, e);
+        return TypedPromiseImpl.<V, R>factory().rejectedPromise(r, e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -264,7 +264,7 @@ public class PS
      */
     public static <V, R1, R2> Promise<V, M2<R1, R2>> pr(final R1 r1, final R2 r2, final Throwable e)
     {
-        return PromiseFactory.rejectedPromise(new M2<R1, R2>(r1, r2), e);
+        return pr(new M2<R1, R2>(r1, r2), e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -279,7 +279,7 @@ public class PS
     public static <V, R1, R2, R3> Promise<V, M3<R1, R2, R3>>
     pr(final R1 r1, final R2 r2, final R3 r3, final Throwable e)
     {
-        return PromiseFactory.rejectedPromise(new M3<R1, R2, R3>(r1, r2, r3), e);
+        return pr(new M3<R1, R2, R3>(r1, r2, r3), e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -295,7 +295,7 @@ public class PS
     public static <V, R1, R2, R3, R4> Promise<V, M4<R1, R2, R3, R4>>
     pr(final R1 r1, final R2 r2, final R3 r3, final R4 r4, final Throwable e)
     {
-        return PromiseFactory.rejectedPromise(new M4<R1, R2, R3, R4>(r1, r2, r3, r4), e);
+        return pr(new M4<R1, R2, R3, R4>(r1, r2, r3, r4), e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -312,7 +312,7 @@ public class PS
     public static <V, R1, R2, R3, R4, R5> Promise<V, M5<R1, R2, R3, R4, R5>>
     pr(final R1 r1, final R2 r2, final R3 r3, final R4 r4, final R5 r5, final Throwable e)
     {
-        return PromiseFactory.rejectedPromise(new M5<R1, R2, R3, R4, R5>(r1, r2, r3, r4, r5), e);
+        return pr(new M5<R1, R2, R3, R4, R5>(r1, r2, r3, r4, r5), e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -323,7 +323,7 @@ public class PS
      */
     public static <V, R> Promise<V, R> pr(final R r)
     {
-        return PromiseFactory.rejectedPromise(r, null);
+        return pr(r, null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -335,7 +335,7 @@ public class PS
      */
     public static <V, R1, R2> Promise<V, M2<R1, R2>> pr(final R1 r1, final R2 r2)
     {
-        return PromiseFactory.rejectedPromise(new M2<R1, R2>(r1, r2), null);
+        return pr(new M2<R1, R2>(r1, r2), null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -348,7 +348,7 @@ public class PS
      */
     public static <V, R1, R2, R3> Promise<V, M3<R1, R2, R3>> pr(final R1 r1, final R2 r2, final R3 r3)
     {
-        return PromiseFactory.rejectedPromise(new M3<R1, R2, R3>(r1, r2, r3), null);
+        return pr(new M3<R1, R2, R3>(r1, r2, r3), null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -363,7 +363,7 @@ public class PS
     public static <V, R1, R2, R3, R4> Promise<V, M4<R1, R2, R3, R4>>
     pr(final R1 r1, final R2 r2, final R3 r3, final R4 r4)
     {
-        return PromiseFactory.rejectedPromise(new M4<R1, R2, R3, R4>(r1, r2, r3, r4), null);
+        return pr(new M4<R1, R2, R3, R4>(r1, r2, r3, r4), null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -379,7 +379,7 @@ public class PS
     public static <V, R1, R2, R3, R4, R5> Promise<V, M5<R1, R2, R3, R4, R5>>
     pr(final R1 r1, final R2 r2, final R3 r3, final R4 r4, final R5 r5)
     {
-        return PromiseFactory.rejectedPromise(new M5<R1, R2, R3, R4, R5>(r1, r2, r3, r4, r5), null);
+        return pr(new M5<R1, R2, R3, R4, R5>(r1, r2, r3, r4, r5), null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -390,23 +390,7 @@ public class PS
      */
     public static <V, R> Promise<V, R> pr(final Throwable e)
     {
-        return PromiseFactory.rejectedPromise(null, e);
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    /**
-     * Wraps the specified single-argument {@code onFulfilled} callback to a single aggregated-argument callback.
-     *
-     * @param onFulfilled The single-argument {@code onFulfilled} callback to be wrapped
-     * @return The wrapper callback
-     */
-    public static <VI, VO, RO> OnFulfilled<VI, VO, RO>
-    wf(final FR1<? super VI, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled)
-    {
-        return new OnFulfilled<VI, VO, RO>() {
-            @Override public final Resolution<? extends VO, ? extends RO> call(final VI v) throws Throwable {
-                return onFulfilled.call(v);
-            }
-        };
+        return pr(null, e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -478,23 +462,6 @@ public class PS
             @Override public final Resolution<? extends VO, ? extends RO>
             call(final M5<VI1, VI2, VI3, VI4, VI5> v) throws Throwable {
                 return onFulfilled.call(v.v1, v.v2, v.v3, v.v4, v.v5);
-            }
-        };
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    /**
-     * Wraps the specified single-argument {@code onRejected} callback to a single aggregated-argument callback.
-     *
-     * @param onRejected The single-argument {@code onRejected} callback to be wrapped
-     * @return The wrapper callback
-     */
-    public static <RI, VO, RO> OnRejected<RI, VO, RO>
-    wr(final FR2<? super RI, Throwable, ? extends Resolution<? extends VO, ? extends RO>> onRejected)
-    {
-        return new OnRejected<RI, VO, RO>() {
-            @Override public final Resolution<? extends VO, ? extends RO>
-            call(final RI r, final Throwable e) throws Throwable {
-                return onRejected.call(r, e);
             }
         };
     }

@@ -5,13 +5,13 @@
 //---------------------------------------------------------------------------------------------------------------------
 package promises;
 import promises.impl.LoggerManager;
-import promises.impl.PromiseFactory;
+import promises.impl.UntypedPromiseImpl;
 import java.util.concurrent.Executor;
 //---------------------------------------------------------------------------------------------------------------------
 /**
  * Defines static methods for manipulating promise stuffs with Untyped Style.
  */
-public class PS
+public class Promises
 {
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -99,7 +99,7 @@ public class PS
      */
     public static Promise pf(final Object v)
     {
-        return PromiseFactory.fulfilledPromise(v);
+        return UntypedPromiseImpl.factory.fulfilledPromise(v);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -111,7 +111,7 @@ public class PS
      */
     public static Promise pf(final Object v1, final Object v2)
     {
-        return PromiseFactory.fulfilledPromise(v(v1, v2));
+        return pf(v(v1, v2));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -124,7 +124,7 @@ public class PS
      */
     public static Promise pf(final Object v1, final Object v2, final Object v3)
     {
-        return PromiseFactory.fulfilledPromise(v(v1, v2, v3));
+        return pf(v(v1, v2, v3));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -138,7 +138,7 @@ public class PS
      */
     public static Promise pf(final Object v1, final Object v2, final Object v3, final Object v4)
     {
-        return PromiseFactory.fulfilledPromise(v(v1, v2, v3, v4));
+        return pf(v(v1, v2, v3, v4));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -153,7 +153,7 @@ public class PS
      */
     public static Promise pf(final Object v1, final Object v2, final Object v3, final Object v4, final Object v5)
     {
-        return PromiseFactory.fulfilledPromise(v(v1, v2, v3, v4, v5));
+        return pf(v(v1, v2, v3, v4, v5));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -165,7 +165,7 @@ public class PS
      */
     public static Promise pr(final Object r, final Throwable e)
     {
-        return PromiseFactory.rejectedPromise(r, e);
+        return UntypedPromiseImpl.factory.rejectedPromise(r, e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -178,7 +178,7 @@ public class PS
      */
     public static Promise pr(final Object r1, final Object r2, final Throwable e)
     {
-        return PromiseFactory.rejectedPromise(v(r1, r2), e);
+        return pr(v(r1, r2), e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -192,7 +192,7 @@ public class PS
      */
     public static Promise pr(final Object r1, final Object r2, final Object r3, final Throwable e)
     {
-        return PromiseFactory.rejectedPromise(v(r1, r2, r3), e);
+        return pr(v(r1, r2, r3), e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -207,7 +207,7 @@ public class PS
      */
     public static Promise pr(final Object r1, final Object r2, final Object r3, final Object r4, final Throwable e)
     {
-        return PromiseFactory.rejectedPromise(v(r1, r2, r3, r4), e);
+        return pr(v(r1, r2, r3, r4), e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -224,7 +224,7 @@ public class PS
     public static Promise
     pr(final Object r1, final Object r2, final Object r3, final Object r4, final Object r5, final Throwable e)
     {
-        return PromiseFactory.rejectedPromise(v(r1, r2, r3, r4, r5), e);
+        return pr(v(r1, r2, r3, r4, r5), e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -235,7 +235,7 @@ public class PS
      */
     public static Promise pr(final Object r)
     {
-        return PromiseFactory.rejectedPromise(r, null);
+        return pr(r, null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -247,7 +247,7 @@ public class PS
      */
     public static Promise pr(final Object r1, final Object r2)
     {
-        return PromiseFactory.rejectedPromise(v(r1, r2), null);
+        return pr(v(r1, r2), null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -260,7 +260,7 @@ public class PS
      */
     public static Promise pr(final Object r1, final Object r2, final Object r3)
     {
-        return PromiseFactory.rejectedPromise(v(r1, r2, r3), null);
+        return pr(v(r1, r2, r3), null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -274,7 +274,7 @@ public class PS
      */
     public static Promise pr(final Object r1, final Object r2, final Object r3, final Object r4)
     {
-        return PromiseFactory.rejectedPromise(v(r1, r2, r3, r4), null);
+        return pr(v(r1, r2, r3, r4), null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -289,7 +289,7 @@ public class PS
      */
     public static Promise pr(final Object r1, final Object r2, final Object r3, final Object r4, final Object r5)
     {
-        return PromiseFactory.rejectedPromise(v(r1, r2, r3, r4, r5), null);
+        return pr(v(r1, r2, r3, r4, r5), null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -300,22 +300,7 @@ public class PS
      */
     public static Promise pr(final Throwable e)
     {
-        return PromiseFactory.rejectedPromise(null, e);
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    /**
-     * Wraps the specified single-argument {@code onFulfilled} callback to a single aggregated-argument callback.
-     *
-     * @param onFulfilled The single-argument {@code onFulfilled} callback to be wrapped
-     * @return The wrapper callback
-     */
-    public static <VI> OnFulfilled<VI> wf(final FR1<? super VI, ?> onFulfilled)
-    {
-        return new OnFulfilled<VI>() {
-            @Override public final Object call(final VI v) throws Throwable {
-                return onFulfilled.call(v);
-            }
-        };
+        return pr(null, e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -377,21 +362,6 @@ public class PS
         return new OnFulfilled<M5<VI1, VI2, VI3, VI4, VI5>>() {
             @Override public final Object call(final M5<VI1, VI2, VI3, VI4, VI5> v) throws Throwable {
                 return onFulfilled.call(v.v1, v.v2, v.v3, v.v4, v.v5);
-            }
-        };
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    /**
-     * Wraps the specified single-argument {@code onRejected} callback to a single aggregated-argument callback.
-     *
-     * @param onRejected The single-argument {@code onRejected} callback to be wrapped
-     * @return The wrapper callback
-     */
-    public static <RI> OnRejected<RI> wr(final FR2<? super RI, Throwable, ?> onRejected)
-    {
-        return new OnRejected<RI>() {
-            @Override public final Object call(final RI r, final Throwable e) throws Throwable {
-                return onRejected.call(r, e);
             }
         };
     }

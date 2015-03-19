@@ -94,7 +94,7 @@ public interface Promise
      * @return The next chained promise
      */
     public abstract Promise
-    then(final Executor exec, final OnFulfilled<?> onFulfilled, final OnRejected<?> onRejected);
+    then(final Executor exec, final FR1<?, ?> onFulfilled, final FR2<?, Throwable, ?> onRejected);
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * The {@code then} method without {@code onRejected} callback by using the specified executor.
@@ -103,7 +103,7 @@ public interface Promise
      * @param onFulfilled The {@code onFulfilled} callback being invoked when this promise is fulfilled
      * @return The next chained promise
      */
-    public abstract Promise then(final Executor exec, final OnFulfilled<?> onFulfilled);
+    public abstract Promise then(final Executor exec, final FR1<?, ?> onFulfilled);
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * The {@code then} method with {@code onRejected} callback by using the current-thread executor.
@@ -112,7 +112,7 @@ public interface Promise
      * @param onRejected The {@code onRejected} callback being invoked when this promise is rejected
      * @return The next chained promise
      */
-    public abstract Promise then(final OnFulfilled<?> onFulfilled, final OnRejected<?> onRejected);
+    public abstract Promise then(final FR1<?, ?> onFulfilled, final FR2<?, Throwable, ?> onRejected);
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * The {@code then} method without {@code onRejected} callback by using the current-thread executor.
@@ -120,7 +120,7 @@ public interface Promise
      * @param onFulfilled The {@code onFulfilled} callback being invoked when this promise is fulfilled
      * @return The next chained promise
      */
-    public abstract Promise then(final OnFulfilled<?> onFulfilled);
+    public abstract Promise then(final FR1<?, ?> onFulfilled);
     //-----------------------------------------------------------------------------------------------------------------
 }
 //---------------------------------------------------------------------------------------------------------------------

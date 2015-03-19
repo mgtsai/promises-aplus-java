@@ -15,7 +15,7 @@ import promises.lw.RejP;
 import promises.lw.ResP;
 import promises.typed.Resolution;
 //---------------------------------------------------------------------------------------------------------------------
-abstract class ResolvingTask<VO, RO> extends ChainingTask<VO, RO> implements Runnable
+abstract class ResolvingTask<PO> extends ChainingTask<PO> implements Runnable
 {
     //-----------------------------------------------------------------------------------------------------------------
     private final ResolutionSupplier resSupp;
@@ -26,63 +26,65 @@ abstract class ResolvingTask<VO, RO> extends ChainingTask<VO, RO> implements Run
     }
     //-----------------------------------------------------------------------------------------------------------------
     abstract void afterExec();
-    abstract void fulfillChainDstPromise(final VO vo);
-    abstract void rejectChainDstPromise(final RO ro, final Throwable eo);
+    abstract void fulfillChainDstPromise(final Object vo);
+    abstract void rejectChainDstPromise(final Object ro, final Throwable eo);
     //-----------------------------------------------------------------------------------------------------------------
     private void resolveChainDstPromiseByUntypedPromise(final promises.Promise promise)
     {
         final OnePass onePass = new OnePass();
 
         promise.then(
-            new promises.OnFulfilled<VO>() { @Override public final Object call(final VO vo) {
+            new promises.OnFulfilled<Object>() { @Override public final Object call(final Object vo) {
                 if (onePass.pass())
                     fulfillChainDstPromise(vo);
-                return PromiseFactory.alwaysPendingPromise();
+                return UntypedPromiseImpl.factory.alwaysPendingPromise();
             }},
-            new promises.OnRejected<RO>() { @Override public final Object call(final RO ro, final Throwable eo) {
-                if (onePass.pass())
-                    rejectChainDstPromise(ro, eo);
-                return PromiseFactory.alwaysPendingPromise();
-            }}
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    private void resolveChainDstPromiseByTypedPromise(final promises.typed.Promise<VO, RO> promise)
-    {
-        final OnePass onePass = new OnePass();
-
-        promise.then(
-            new promises.typed.OnFulfilled<VO, Object, Object>() {
-                @Override public final Resolution<?, ?> call(final VO vo) {
-                    if (onePass.pass())
-                        fulfillChainDstPromise(vo);
-                    return PromiseFactory.alwaysPendingPromise();
-                }
-            },
-            new promises.typed.OnRejected<RO, Object, Object>() {
-                @Override public final Resolution<?, ?> call(final RO ro, final Throwable eo) {
+            new promises.OnRejected<Object>() {
+                @Override public final Object call(final Object ro, final Throwable eo) {
                     if (onePass.pass())
                         rejectChainDstPromise(ro, eo);
-                    return PromiseFactory.alwaysPendingPromise();
+                    return UntypedPromiseImpl.factory.alwaysPendingPromise();
                 }
             }
         );
     }
     //-----------------------------------------------------------------------------------------------------------------
-    private void resolveChainDstPromiseByLightWeightPromise(final P<VO> promise)
+    private void resolveChainDstPromiseByTypedPromise(final promises.typed.Promise<?, ?> promise)
     {
         final OnePass onePass = new OnePass();
 
         promise.then(
-            new OnFul<VO, Object>() { @Override public final RV<?> call(final VO vo) {
+            new promises.typed.OnFulfilled<Object, Object, Object>() {
+                @Override public final Resolution<?, ?> call(final Object vo) {
+                    if (onePass.pass())
+                        fulfillChainDstPromise(vo);
+                    return TypedPromiseImpl.factory().alwaysPendingPromise();
+                }
+            },
+            new promises.typed.OnRejected<Object, Object, Object>() {
+                @Override public final Resolution<?, ?> call(final Object ro, final Throwable eo) {
+                    if (onePass.pass())
+                        rejectChainDstPromise(ro, eo);
+                    return TypedPromiseImpl.factory().alwaysPendingPromise();
+                }
+            }
+        );
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    private void resolveChainDstPromiseByLightWeightPromise(final P<?> promise)
+    {
+        final OnePass onePass = new OnePass();
+
+        promise.then(
+            new OnFul<Object, Object>() { @Override public final RV<?> call(final Object vo) {
                 if (onePass.pass())
                     fulfillChainDstPromise(vo);
-                return PromiseFactory.alwaysPendingPromise();
+                return LightWeightPromiseImpl.factory().alwaysPendingPromise();
             }},
             new OnRej<Object>() { @Override public final RV<?> call(final Throwable eo) {
                 if (onePass.pass())
                     rejectChainDstPromise(null, eo);
-                return PromiseFactory.alwaysPendingPromise();
+                return LightWeightPromiseImpl.factory().alwaysPendingPromise();
             }}
         );
     }
@@ -100,50 +102,10 @@ abstract class ResolvingTask<VO, RO> extends ChainingTask<VO, RO> implements Run
                 new promises.RejectPromise() {
                     @Override public final void reject(final Object ro, final Throwable eo) {
                         if (onePass.pass())
-                            rejectChainDstPromise(ImplUtil.<RO>cast(ro), eo);
-                    }
-
-                    @Override public final void reject(final Object ro) {
-                        if (onePass.pass())
-                            rejectChainDstPromise(ImplUtil.<RO>cast(ro), null);
-                    }
-
-                    @Override public final void reject(final Throwable eo) {
-                        if (onePass.pass())
-                            rejectChainDstPromise(null, eo);
-                    }
-                }
-            );
-        } catch (final Throwable eo) {
-            if (onePass.pass())
-                rejectChainDstPromise(null, eo);
-        }
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    private void resolveChainDstPromiseByTypedThenable(final promises.typed.Thenable<VO, RO> thenable)
-    {
-        final OnePass onePass = new OnePass();
-
-        try {
-            thenable.then(
-                new promises.typed.ResolvePromise<VO, RO>() {
-                    @Override public final void resolve(final Resolution<? extends VO, ? extends RO> res) {
-                        if (onePass.pass())
-                            resolveChainDstPromise(res);
-                    }
-
-                    @Override public final void resolve(final VO vo) {
-                        if (onePass.pass())
-                            fulfillChainDstPromise(vo);
-                    }
-                },
-                new promises.typed.RejectPromise<RO>() {
-                    @Override public final void reject(final RO ro, final Throwable eo) {
-                        if (onePass.pass())
                             rejectChainDstPromise(ro, eo);
                     }
 
-                    @Override public final void reject(final RO ro) {
+                    @Override public final void reject(final Object ro) {
                         if (onePass.pass())
                             rejectChainDstPromise(ro, null);
                     }
@@ -160,19 +122,59 @@ abstract class ResolvingTask<VO, RO> extends ChainingTask<VO, RO> implements Run
         }
     }
     //-----------------------------------------------------------------------------------------------------------------
-    private void resolveChainDstPromiseByLightWeightThenable(final promises.lw.Thenable<VO> thenable)
+    private void resolveChainDstPromiseByTypedThenable(final promises.typed.Thenable<Object, Object> thenable)
     {
         final OnePass onePass = new OnePass();
 
         try {
             thenable.then(
-                new ResP<VO>() {
-                    @Override public final void resolve(final RV<? extends VO> res) {
+                new promises.typed.ResolvePromise<Object, Object>() {
+                    @Override public final void resolve(final Resolution<?, ?> res) {
                         if (onePass.pass())
                             resolveChainDstPromise(res);
                     }
 
-                    @Override public final void resolve(final VO vo) {
+                    @Override public final void resolve(final Object vo) {
+                        if (onePass.pass())
+                            fulfillChainDstPromise(vo);
+                    }
+                },
+                new promises.typed.RejectPromise<Object>() {
+                    @Override public final void reject(final Object ro, final Throwable eo) {
+                        if (onePass.pass())
+                            rejectChainDstPromise(ro, eo);
+                    }
+
+                    @Override public final void reject(final Object ro) {
+                        if (onePass.pass())
+                            rejectChainDstPromise(ro, null);
+                    }
+
+                    @Override public final void reject(final Throwable eo) {
+                        if (onePass.pass())
+                            rejectChainDstPromise(null, eo);
+                    }
+                }
+            );
+        } catch (final Throwable eo) {
+            if (onePass.pass())
+                rejectChainDstPromise(null, eo);
+        }
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    private void resolveChainDstPromiseByLightWeightThenable(final promises.lw.Thenable<Object> thenable)
+    {
+        final OnePass onePass = new OnePass();
+
+        try {
+            thenable.then(
+                new ResP<Object>() {
+                    @Override public final void resolve(final RV<?> res) {
+                        if (onePass.pass())
+                            resolveChainDstPromise(res);
+                    }
+
+                    @Override public final void resolve(final Object vo) {
                         if (onePass.pass())
                             fulfillChainDstPromise(vo);
                     }
@@ -188,7 +190,7 @@ abstract class ResolvingTask<VO, RO> extends ChainingTask<VO, RO> implements Run
         }
     }
     //-----------------------------------------------------------------------------------------------------------------
-    private void resolveChainDstPromiseByResolution(final Resolution<VO, RO> res)
+    private void resolveChainDstPromiseByResolution(final Resolution<?, ?> res)
     {
         final PromiseState state = res.state();
 
@@ -213,8 +215,8 @@ abstract class ResolvingTask<VO, RO> extends ChainingTask<VO, RO> implements Run
     //-----------------------------------------------------------------------------------------------------------------
     private void resolveChainDstPromise(final Object v)
     {
-        if (v instanceof AbstractPromise) {
-            ImplUtil.<AbstractPromise<VO, RO>>cast(v).resolveDestination(this);
+        if (v instanceof BasePromiseImpl) {
+            ((BasePromiseImpl) v).resolveDestination(this);
             return;
         }
 
@@ -224,41 +226,41 @@ abstract class ResolvingTask<VO, RO> extends ChainingTask<VO, RO> implements Run
         }
 
         if (v instanceof promises.typed.Promise) {
-            resolveChainDstPromiseByTypedPromise(ImplUtil.<promises.typed.Promise<VO, RO>>cast(v));
+            resolveChainDstPromiseByTypedPromise((promises.typed.Promise<?, ?>) v);
             return;
         }
 
         if (v instanceof P) {
-            resolveChainDstPromiseByLightWeightPromise(ImplUtil.<P<VO>>cast(v));
+            resolveChainDstPromiseByLightWeightPromise((P<?>) v);
             return;
         }
 
         if (v instanceof promises.Thenable) {
-            resolveChainDstPromiseByUntypedThenable(ImplUtil.<promises.Thenable>cast(v));
+            resolveChainDstPromiseByUntypedThenable((promises.Thenable) v);
             return;
         }
 
         if (v instanceof promises.typed.Thenable) {
-            resolveChainDstPromiseByTypedThenable(ImplUtil.<promises.typed.Thenable<VO, RO>>cast(v));
+            resolveChainDstPromiseByTypedThenable(ImplUtil.<promises.typed.Thenable<Object, Object>>cast(v));
             return;
         }
 
         if (v instanceof promises.lw.Thenable) {
-            resolveChainDstPromiseByLightWeightThenable(ImplUtil.<promises.lw.Thenable<VO>>cast(v));
+            resolveChainDstPromiseByLightWeightThenable(ImplUtil.<promises.lw.Thenable<Object>>cast(v));
             return;
         }
 
         if (v instanceof Resolution) {
-            resolveChainDstPromiseByResolution(ImplUtil.<Resolution<VO, RO>>cast(v));
+            resolveChainDstPromiseByResolution((Resolution<?, ?>) v);
             return;
         }
 
         if (v instanceof RV) {
-            fulfillChainDstPromise(ImplUtil.<RV<VO>>cast(v).value());
+            fulfillChainDstPromise(((RV<?>) v).value());
             return;
         }
 
-        fulfillChainDstPromise(ImplUtil.<VO>cast(v));
+        fulfillChainDstPromise(v);
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override

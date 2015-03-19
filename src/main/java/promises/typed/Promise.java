@@ -4,6 +4,8 @@
 // found at http://www.apache.org/licenses/LICENSE-2.0
 //---------------------------------------------------------------------------------------------------------------------
 package promises.typed;
+import promises.FR1;
+import promises.FR2;
 import promises.PromiseRejectedException;
 import promises.lw.P;
 import java.util.concurrent.Executor;
@@ -68,8 +70,8 @@ public interface Promise<V, R> extends Resolution<V, R>
      */
     public abstract <VO, RO> Promise<VO, RO> then(
         final Executor exec,
-        final OnFulfilled<? super V, VO, RO> onFulfilled,
-        final OnRejected<? super R, VO, RO> onRejected
+        final FR1<? super V, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled,
+        final FR2<? super R, Throwable, ? extends Resolution<? extends VO, ? extends RO>> onRejected
     );
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -80,7 +82,7 @@ public interface Promise<V, R> extends Resolution<V, R>
      * @return The next chained promise
      */
     public abstract <VO, RO> Promise<VO, RO>
-    then(final Executor exec, final OnFulfilled<? super V, VO, RO> onFulfilled);
+    then(final Executor exec, final FR1<? super V, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled);
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * The {@code then} method with {@code onRejected} callback by using the current-thread executor.
@@ -89,8 +91,10 @@ public interface Promise<V, R> extends Resolution<V, R>
      * @param onRejected The {@code onRejected} callback being invoked when this promise is rejected
      * @return The next chained promise
      */
-    public abstract <VO, RO> Promise<VO, RO>
-    then(final OnFulfilled<? super V, VO, RO> onFulfilled, final OnRejected<? super R, VO, RO> onRejected);
+    public abstract <VO, RO> Promise<VO, RO> then(
+        final FR1<? super V, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled,
+        final FR2<? super R, Throwable, ? extends Resolution<? extends VO, ? extends RO>> onRejected
+    );
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * The {@code then} method without {@code onRejected} callback by using the current-thread executor.
@@ -98,7 +102,8 @@ public interface Promise<V, R> extends Resolution<V, R>
      * @param onFulfilled The {@code onFulfilled} callback being invoked when this promise is fulfilled
      * @return The next chained promise
      */
-    public abstract <VO, RO> Promise<VO, RO> then(final OnFulfilled<? super V, VO, RO> onFulfilled);
+    public abstract <VO, RO> Promise<VO, RO>
+    then(final FR1<? super V, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled);
     //-----------------------------------------------------------------------------------------------------------------
 }
 //---------------------------------------------------------------------------------------------------------------------
