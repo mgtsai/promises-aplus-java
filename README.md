@@ -27,7 +27,7 @@ Implementation of Promises/A+ in Java, plus various language sugars for programm
 ## <a name="untypedExamples"></a>Brief examples
 
 ### Using Untyped Interface Set
-`java
+```java
 promises.Promises.pf(null)      // Returns fulfilled promises.Promise with null value
 .then(dummy -> {
     ...
@@ -46,10 +46,10 @@ promises.Promises.pf(null)      // Returns fulfilled promises.Promise with null 
 .then((Integer num) -> {        // Since promises.Promise has no type parameter, this lambda should specify the explicit argument type: Integer
     ...
 });
-`
+```
 
 ### Using Typed Interface Set
-`java
+```java
 promises.typed.Promises.pf(null)                // Returns fulfilled promises.typed.Promise<Object, Object> with null value
 .then(dummy -> {
     ...
@@ -68,13 +68,13 @@ promises.typed.Promises.pf(null)                // Returns fulfilled promises.ty
 .then(num -> {                                  // Type of argument 'num': Integer
     ...
 });
-`
+```
 
 ### Using Light-weight Interface Set
 For simplicity, light-weight promise objects do not contain rejection reasons (only contain _Throwable_ objects) to
 avoid specifying reason type parameter.
 
-`java
+```java
 promises.lw.Promises.pf(null)                   // Returns fulfilled promises.lw.P<Object> with null value
 .then(dummy -> {
     ...
@@ -93,10 +93,10 @@ promises.lw.Promises.pf(null)                   // Returns fulfilled promises.lw
 .then(num -> {                                  // Type of argument 'num': Integer
     ...
 });
-`
+```
 
 ### Multi-argument callbacks
-`java
+```java
 promises.typed.Promises.pf(null)
 .then(dummy -> {
     ...
@@ -112,10 +112,10 @@ promises.typed.Promises.pf(null)
     promises.typed.Promises.wr((code, err, exception) -> {      // Types of arguments: (Integer, String, Throwable), can be simplified by using static import
     })
 );
-`
+```
 
 ### Waits for promises being resolved (fulfilled or rejected)
-`java
+```java
 promises.typed.Promises.pf(null)
 .then(...)
 .then(...)
@@ -125,11 +125,11 @@ promises.typed.Promises.pf(null)
                                     // When the chaining promise is fulfilled, the value would be returned
                                     // When the chaining promise is rejected, promises.PromiseRejectedException containing return rejected reason/exception would be thrown
                                     // After 60 seconds without resolving, java.util.concurrent.TimeoutException would be thrown
-`
+```
 
 ### Executes a synchronous method (i.e. JDBC operations) on the specified Executor (Thread)
 
-`java
+```java
 java.util.concurrent.Executor exec = java.util.concurrent.Executors.newSingleThreadExecutor(thread);
 
 promises.typed.Promises.async(exec, () -> {
@@ -149,4 +149,4 @@ promises.typed.Promises.async(exec, () -> {
         ...
     }
 );
-`
+```
