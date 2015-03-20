@@ -21,6 +21,7 @@ public class Promises
      */
     public static void registerInternalExceptionHandler(final InternalExceptionHandler handler)
     {
+        java.util.concurrent.Executors.newSingleThreadExecutor();
         LoggerManager.singleton().registerInternalExceptionHandler(handler);
     }
     //-----------------------------------------------------------------------------------------------------------------

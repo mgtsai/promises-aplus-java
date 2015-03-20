@@ -29,7 +29,7 @@ public abstract class UntypedPromiseImpl extends BasePromiseImpl implements Prom
 
                 @Override final Object
                 doAwait(final long timeout, final TimeUnit unit) throws InterruptedException, TimeoutException {
-                    return ImplUtil.waitForever(timeout, unit);
+                    return ImplUtil.waitTimeout(timeout, unit);
                 }
 
                 @Override public final <V, R> promises.typed.Promise<V, R> toTypedPromise() {

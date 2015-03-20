@@ -26,10 +26,10 @@ public final class ImplUtil
         throw new InternalException("Running after indefinite waiting");
     }
     //-----------------------------------------------------------------------------------------------------------------
-    static <V> V waitForever(final long timeout, final TimeUnit unit) throws InterruptedException, TimeoutException
+    static <V> V waitTimeout(final long timeout, final TimeUnit unit) throws InterruptedException, TimeoutException
     {
         waitForever.await(timeout, unit);
-        throw new TimeoutException("Timeout arrived for forever-waiting");
+        throw new TimeoutException("Timeout arrived");
     }
     //-----------------------------------------------------------------------------------------------------------------
     @SuppressWarnings("unchecked")

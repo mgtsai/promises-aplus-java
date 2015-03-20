@@ -31,7 +31,7 @@ public abstract class TypedPromiseImpl<V, R> extends BasePromiseImpl implements 
 
                 @Override final Object
                 doAwait(final long timeout, final TimeUnit unit) throws InterruptedException, TimeoutException {
-                    return ImplUtil.waitForever(timeout, unit);
+                    return ImplUtil.waitTimeout(timeout, unit);
                 }
 
                 @Override public final promises.Promise toUntypedPromise() {
