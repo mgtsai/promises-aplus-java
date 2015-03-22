@@ -5,7 +5,6 @@
 //---------------------------------------------------------------------------------------------------------------------
 package promises.lw;
 import promises.FR0;
-import promises.FR1;
 import promises.FR2;
 import promises.FR3;
 import promises.FR4;
@@ -93,6 +92,16 @@ public class Promises
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
+     * Creates a new promise fulfilled with {@code null}.
+     *
+     * @return The created promise
+     */
+    public static <V> P<V> pn()
+    {
+        return LightWeightPromiseImpl.<V>factory().fulfilledPromise(null);
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    /**
      * Creates a new single-value fulfilled promise.
      *
      * @param v The fulfilled value of the new promise
@@ -159,6 +168,17 @@ public class Promises
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
+     * Creates a new rejected promise.
+     *
+     * @param e The rejected exception of the new promise
+     * @return The created promise
+     */
+    public static <V> P<V> pr(final Throwable e)
+    {
+        return LightWeightPromiseImpl.<V>factory().rejectedPromise(null, e);
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    /**
      * Wraps the specified dual-argument {@code onFulfilled} callback to a single aggregated-argument callback.
      *
      * @param onFulfilled The dual-argument {@code onFulfilled} callback to be wrapped
@@ -169,7 +189,10 @@ public class Promises
     {
         return new OnFul<M2<VI1, VI2>, VO>() {
             @Override public final RV<? extends VO> call(final M2<VI1, VI2> v) throws Throwable {
-                return onFulfilled.call(v.v1, v.v2);
+                if (v != null)
+                    return onFulfilled.call(v.v1, v.v2);
+                else
+                    return onFulfilled.call(null, null);
             }
         };
     }
@@ -185,7 +208,10 @@ public class Promises
     {
         return new OnFul<M3<VI1, VI2, VI3>, VO>() {
             @Override public final RV<? extends VO> call(final M3<VI1, VI2, VI3> v) throws Throwable {
-                return onFulfilled.call(v.v1, v.v2, v.v3);
+                if (v != null)
+                    return onFulfilled.call(v.v1, v.v2, v.v3);
+                else
+                    return onFulfilled.call(null, null, null);
             }
         };
     }
@@ -201,7 +227,10 @@ public class Promises
     {
         return new OnFul<M4<VI1, VI2, VI3, VI4>, VO>() {
             @Override public final RV<? extends VO> call(final M4<VI1, VI2, VI3, VI4> v) throws Throwable {
-                return onFulfilled.call(v.v1, v.v2, v.v3, v.v4);
+                if (v != null)
+                    return onFulfilled.call(v.v1, v.v2, v.v3, v.v4);
+                else
+                    return onFulfilled.call(null, null, null, null);
             }
         };
     }
@@ -220,7 +249,10 @@ public class Promises
     ) {
         return new OnFul<M5<VI1, VI2, VI3, VI4, VI5>, VO>() {
             @Override public final RV<? extends VO> call(final M5<VI1, VI2, VI3, VI4, VI5> v) throws Throwable {
-                return onFulfilled.call(v.v1, v.v2, v.v3, v.v4, v.v5);
+                if (v != null)
+                    return onFulfilled.call(v.v1, v.v2, v.v3, v.v4, v.v5);
+                else
+                    return onFulfilled.call(null, null, null, null, null);
             }
         };
     }

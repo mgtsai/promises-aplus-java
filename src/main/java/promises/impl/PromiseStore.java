@@ -16,15 +16,15 @@ final class PromiseStore
 {
     //-----------------------------------------------------------------------------------------------------------------
     private final CountDownLatch waitUntilResolved = new CountDownLatch(1);
+    boolean isAlwaysPending = false;
     PromiseState state = PromiseState.PENDING;
     Object value = null;
     Object reason = null;
     Throwable exception = null;
-    boolean inSyncIsAlwaysPending = false;
     private ArrayList<BaseTask> onFulfilledTaskQ = null;
     private ArrayList<BaseTask> onRejectedTaskQ = null;
     //-----------------------------------------------------------------------------------------------------------------
-    final Object doAwait() throws InterruptedException, PromiseRejectedException
+    final Object await() throws InterruptedException, PromiseRejectedException
     {
         waitUntilResolved.await();
         final PromiseState state = this.state;
@@ -39,7 +39,7 @@ final class PromiseStore
         }
     }
     //-----------------------------------------------------------------------------------------------------------------
-    final Object doAwait(final long timeout, final TimeUnit unit)
+    final Object await(final long timeout, final TimeUnit unit)
         throws PromiseRejectedException, InterruptedException, TimeoutException
     {
         waitUntilResolved.await(timeout, unit);
@@ -57,33 +57,16 @@ final class PromiseStore
         }
     }
     //-----------------------------------------------------------------------------------------------------------------
-    final synchronized <P extends BasePromiseImpl> P promiseInterface(final PromiseFactory<P> factory)
-    {
-        if (inSyncIsAlwaysPending)
-            return factory.alwaysPendingPromise();
-
-        switch (state) {
-        case PENDING:
-            return factory.pendingPromise(this);
-        case FULFILLED:
-            return factory.fulfilledPromise(value);
-        case REJECTED:
-            return factory.rejectedPromise(reason, exception);
-        default:
-            throw new InternalException("Invalid state %s for specifying promise interface", state);
-        }
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    final void setAlwaysPending()
+    private void setAlwaysPending()
     {
         synchronized (this) {
             if (state != PromiseState.PENDING)
                 throw new InternalException("Not allowed setting always pending after this promise is resolved.");
 
-            if (inSyncIsAlwaysPending)
+            if (isAlwaysPending)
                 return;
 
-            inSyncIsAlwaysPending = true;
+            isAlwaysPending = true;
         }
 
         if (onFulfilledTaskQ != null) {
@@ -99,24 +82,10 @@ final class PromiseStore
         }
     }
     //-----------------------------------------------------------------------------------------------------------------
-    final void inSyncAppendTasksToPendingQueue(final BaseTask onFulfilledTask, final BaseTask onRejectedTask)
-    {
-        if (inSyncIsAlwaysPending)
-            return;
-
-        if (onFulfilledTaskQ == null)
-            onFulfilledTaskQ = new ArrayList<BaseTask>();
-        onFulfilledTaskQ.add(onFulfilledTask);
-
-        if (onRejectedTaskQ == null)
-            onRejectedTaskQ = new ArrayList<BaseTask>();
-        onRejectedTaskQ.add(onRejectedTask);
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    final void doFulfill(final Object value)
+    private void setFulfilled(final Object value)
     {
         synchronized (this) {
-            if (inSyncIsAlwaysPending)
+            if (isAlwaysPending)
                 throw new InternalException("Unexpected fulfilling this always-pending promise");
 
             this.state = PromiseState.FULFILLED;
@@ -135,10 +104,10 @@ final class PromiseStore
         onFulfilledTaskQ = null;
     }
     //-----------------------------------------------------------------------------------------------------------------
-    final void doReject(final Object reason, final Throwable exception)
+    private void setRejected(final Object reason, final Throwable exception)
     {
         synchronized (this) {
-            if (inSyncIsAlwaysPending)
+            if (isAlwaysPending)
                 throw new InternalException("Unexpected rejecting this always-pending promise");
 
             this.state = PromiseState.REJECTED;
@@ -156,6 +125,195 @@ final class PromiseStore
             task.doExec();
 
         onRejectedTaskQ = null;
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    private void inSyncAppendTasksToPendingQueue(final BaseTask onFulfilledTask, final BaseTask onRejectedTask)
+    {
+        if (isAlwaysPending)
+            return;
+
+        if (onFulfilledTaskQ == null)
+            onFulfilledTaskQ = new ArrayList<BaseTask>();
+        onFulfilledTaskQ.add(onFulfilledTask);
+
+        if (onRejectedTaskQ == null)
+            onRejectedTaskQ = new ArrayList<BaseTask>();
+        onRejectedTaskQ.add(onRejectedTask);
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    static <PO> ChainingTask<PO> newResolvedTask(final PromiseFactory<PO> factory, final ResolutionSupplier resSupp)
+    {
+        return new ChainingTask<PO>(resSupp) {
+            private PromiseStore chainDstStore = null;
+            private PO chainDstPromise = null;
+
+            @Override final PO chainDstPromise() { return chainDstPromise; }
+            @Override final void onAlwaysPending() { throw new InternalException("Unexpected OnAlwaysPending"); }
+
+            @Override final synchronized void afterExec() {
+                if (chainDstPromise == null) {
+                    chainDstStore = new PromiseStore();
+                    chainDstPromise = factory.pendingPromise(chainDstStore);
+                }
+            }
+
+            @Override final void fulfillChainDstPromise(final Object vo) {
+                synchronized (this) {
+                    if (chainDstStore == null) {
+                        chainDstPromise = factory.fulfilledPromise(vo);
+                        return;
+                    }
+                }
+
+                chainDstStore.setFulfilled(vo);
+            }
+
+            @Override final void rejectChainDstPromise(final Object ro, final Throwable eo) {
+                synchronized (this) {
+                    if (chainDstStore == null) {
+                        chainDstPromise = factory.rejectedPromise(ro, eo);
+                        return;
+                    }
+                }
+
+                chainDstStore.setRejected(ro, eo);
+            }
+        };
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    private static ResolvingTask newPendingTask(final PromiseStore dstChainStore, final ResolutionSupplier resSupp)
+    {
+        return new ResolvingTask(resSupp) {
+            @Override final void onAlwaysPending() { dstChainStore.setAlwaysPending(); }
+            @Override final void afterExec() { }
+            @Override final void fulfillChainDstPromise(final Object vo) { dstChainStore.setFulfilled(vo); }
+
+            @Override final void rejectChainDstPromise(final Object ro, final Throwable eo) {
+                dstChainStore.setRejected(ro, eo);
+            }
+        };
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    private BaseTask
+    newOnFulfilledPendingTask(final PromiseStore dstChainStore, final ResolutionSupplier onFulfilledResSupp)
+    {
+        if (onFulfilledResSupp != null)
+            return newPendingTask(dstChainStore, onFulfilledResSupp);
+        else
+            return new BaseTask() {
+                @Override final void doExec() { dstChainStore.setFulfilled(value); }
+                @Override final void onAlwaysPending() { dstChainStore.setAlwaysPending(); }
+            };
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    private BaseTask
+    newOnRejectedPendingTask(final PromiseStore dstChainStore, final ResolutionSupplier onRejectedResSupp)
+    {
+        if (onRejectedResSupp != null)
+            return newPendingTask(dstChainStore, onRejectedResSupp);
+        else
+            return new BaseTask() {
+                @Override final void doExec() { dstChainStore.setRejected(reason, exception); }
+                @Override final void onAlwaysPending() { dstChainStore.setAlwaysPending(); }
+            };
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    final <PO> PO doThen(
+        final PromiseFactory<PO> factory,
+        final ResolutionSupplier onFulfilledResSupp,
+        final ResolutionSupplier onRejectedResSupp
+    ) {
+        final ChainingTask<PO> resolvedTask;
+
+        synchronized (this) {
+            if (isAlwaysPending)
+                return factory.alwaysPendingPromise();
+
+            switch (state) {
+            case PENDING:
+                final PromiseStore store = new PromiseStore();
+
+                inSyncAppendTasksToPendingQueue(
+                    newOnFulfilledPendingTask(store, onFulfilledResSupp),
+                    newOnRejectedPendingTask(store, onRejectedResSupp)
+                );
+
+                return factory.pendingPromise(store);
+
+            case FULFILLED:
+                if (onFulfilledResSupp != null) {
+                    resolvedTask = newResolvedTask(factory, onFulfilledResSupp);
+                    break;
+                } else
+                    return factory.fulfilledPromise(value);
+
+            case REJECTED:
+                if (onRejectedResSupp != null) {
+                    resolvedTask = newResolvedTask(factory, onRejectedResSupp);
+                    break;
+                } else
+                    return factory.rejectedPromise(reason, exception);
+
+            default:
+                throw new InternalException("Unknown state %s", state);
+            }
+        }
+
+        resolvedTask.doExec();
+        return resolvedTask.chainDstPromise();
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    private BaseTask newOnFulfilledResolvingTask(final ResolvingTask resDstTask)
+    {
+        return new BaseTask() {
+            @Override final void onAlwaysPending() { resDstTask.onAlwaysPending(); }
+            @Override final void doExec() { resDstTask.fulfillChainDstPromise(value); }
+        };
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    private BaseTask newOnRejectedResolvingTask(final ResolvingTask resDstTask)
+    {
+        return new BaseTask() {
+            @Override final void onAlwaysPending() { resDstTask.onAlwaysPending(); }
+            @Override final void doExec() { resDstTask.rejectChainDstPromise(reason, exception); }
+        };
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    final void resolveDestination(final ResolvingTask resDstTask)
+    {
+        final BaseTask task;
+
+        synchronized (this) {
+            if (isAlwaysPending)
+                task = null;
+            else {
+                switch (state) {
+                case PENDING:
+                    inSyncAppendTasksToPendingQueue(
+                        newOnFulfilledResolvingTask(resDstTask),
+                        newOnRejectedResolvingTask(resDstTask)
+                    );
+
+                    return;
+
+                case FULFILLED:
+                    task = newOnFulfilledResolvingTask(resDstTask);
+                    break;
+
+                case REJECTED:
+                    task = newOnRejectedResolvingTask(resDstTask);
+                    break;
+
+                default:
+                    throw new InternalException("Unknown state %s", state);
+                }
+            }
+        }
+
+        if (!isAlwaysPending)
+            task.doExec();
+        else
+            resDstTask.onAlwaysPending();
     }
     //-----------------------------------------------------------------------------------------------------------------
 }

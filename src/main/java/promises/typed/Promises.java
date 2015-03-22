@@ -5,7 +5,6 @@
 //---------------------------------------------------------------------------------------------------------------------
 package promises.typed;
 import promises.FR0;
-import promises.FR1;
 import promises.FR2;
 import promises.FR3;
 import promises.FR4;
@@ -173,6 +172,16 @@ public class Promises
     r(final R1 r1, final R2 r2, final R3 r3, final R4 r4, final R5 r5, final Throwable e)
     {
         return r(new M5<R1, R2, R3, R4, R5>(r1, r2, r3, r4, r5), e);
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    /**
+     * Creates a new promise fulfilled with {@code null}.
+     *
+     * @return The created promise
+     */
+    public static <V, R> Promise<V, R> pn()
+    {
+        return TypedPromiseImpl.<V, R>factory().fulfilledPromise(null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -404,7 +413,10 @@ public class Promises
     {
         return new OnFulfilled<M2<VI1, VI2>, VO, RO>() {
             @Override public final Resolution<? extends VO, ? extends RO> call(final M2<VI1, VI2> v) throws Throwable {
-                return onFulfilled.call(v.v1, v.v2);
+                if (v != null)
+                    return onFulfilled.call(v.v1, v.v2);
+                else
+                    return onFulfilled.call(null, null);
             }
         };
     }
@@ -421,7 +433,10 @@ public class Promises
         return new OnFulfilled<M3<VI1, VI2, VI3>, VO, RO>() {
             @Override public final Resolution<? extends VO, ? extends RO>
             call(final M3<VI1, VI2, VI3> v) throws Throwable {
-                return onFulfilled.call(v.v1, v.v2, v.v3);
+                if (v != null)
+                    return onFulfilled.call(v.v1, v.v2, v.v3);
+                else
+                    return onFulfilled.call(null, null, null);
             }
         };
     }
@@ -441,7 +456,10 @@ public class Promises
         return new OnFulfilled<M4<VI1, VI2, VI3, VI4>, VO, RO>() {
             @Override public final Resolution<? extends VO, ? extends RO>
             call(final M4<VI1, VI2, VI3, VI4> v) throws Throwable {
-                return onFulfilled.call(v.v1, v.v2, v.v3, v.v4);
+                if (v != null)
+                    return onFulfilled.call(v.v1, v.v2, v.v3, v.v4);
+                else
+                    return onFulfilled.call(null, null, null, null);
             }
         };
     }
@@ -461,7 +479,10 @@ public class Promises
         return new OnFulfilled<M5<VI1, VI2, VI3, VI4, VI5>, VO, RO>() {
             @Override public final Resolution<? extends VO, ? extends RO>
             call(final M5<VI1, VI2, VI3, VI4, VI5> v) throws Throwable {
-                return onFulfilled.call(v.v1, v.v2, v.v3, v.v4, v.v5);
+                if (v != null)
+                    return onFulfilled.call(v.v1, v.v2, v.v3, v.v4, v.v5);
+                else
+                    return onFulfilled.call(null, null, null, null, null);
             }
         };
     }
@@ -478,7 +499,10 @@ public class Promises
         return new OnRejected<M2<RI1, RI2>, VO, RO>() {
             @Override public final Resolution<? extends VO, ? extends RO>
             call(final M2<RI1, RI2> r, final Throwable e) throws Throwable {
-                return onRejected.call(r.v1, r.v2, e);
+                if (r != null)
+                    return onRejected.call(r.v1, r.v2, e);
+                else
+                    return onRejected.call(null, null, e);
             }
         };
     }
@@ -498,7 +522,10 @@ public class Promises
         return new OnRejected<M3<RI1, RI2, RI3>, VO, RO>() {
             @Override public final Resolution<? extends VO, ? extends RO>
             call(final M3<RI1, RI2, RI3> r, final Throwable e) throws Throwable {
-                return onRejected.call(r.v1, r.v2, r.v3, e);
+                if (r != null)
+                    return onRejected.call(r.v1, r.v2, r.v3, e);
+                else
+                    return onRejected.call(null, null, null, e);
             }
         };
     }
@@ -518,7 +545,10 @@ public class Promises
         return new OnRejected<M4<RI1, RI2, RI3, RI4>, VO, RO>() {
             @Override public final Resolution<? extends VO, ? extends RO>
             call(final M4<RI1, RI2, RI3, RI4> r, final Throwable e) throws Throwable {
-                return onRejected.call(r.v1, r.v2, r.v3, r.v4, e);
+                if (r != null)
+                    return onRejected.call(r.v1, r.v2, r.v3, r.v4, e);
+                else
+                    return onRejected.call(null, null, null, null, e);
             }
         };
     }
@@ -538,7 +568,10 @@ public class Promises
         return new OnRejected<M5<RI1, RI2, RI3, RI4, RI5>, VO, RO>() {
             @Override public final Resolution<? extends VO, ? extends RO>
             call(final M5<RI1, RI2, RI3, RI4, RI5> r, final Throwable e) throws Throwable {
-                return onRejected.call(r.v1, r.v2, r.v3, r.v4, r.v5, e);
+                if (r != null)
+                    return onRejected.call(r.v1, r.v2, r.v3, r.v4, r.v5, e);
+                else
+                    return onRejected.call(null, null, null, null, null, e);
             }
         };
     }

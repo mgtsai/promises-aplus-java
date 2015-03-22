@@ -15,7 +15,7 @@ import promises.lw.RejP;
 import promises.lw.ResP;
 import promises.typed.Resolution;
 //---------------------------------------------------------------------------------------------------------------------
-abstract class ResolvingTask<PO> extends ChainingTask<PO> implements Runnable
+abstract class ResolvingTask extends BaseTask implements Runnable
 {
     //-----------------------------------------------------------------------------------------------------------------
     private final ResolutionSupplier resSupp;

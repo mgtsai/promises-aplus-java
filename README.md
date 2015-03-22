@@ -18,7 +18,7 @@ Implementation of Promises/A+ in Java, plus various language sugars for programm
 * Supports pre-built multi-argument (up to 5 arguments) fulfilled values (or rejected reasons) passing amount `.then()`
   method chaining
 * Can specify certain callbacks running on the specific `java.util.concurrent.Executor` context, which generally
-  be different threads, even can be RPC calls by implementing Executor interfaces
+  be different threads, even can be RPC calls by implementing the _Executor_ interface
 * Utility methods convenient to switch between synchronous and asynchronous programming models
 * _(Not supported yet)_ Supports asynchronous sequential/parallel flow controls, such as _if-then-else_, _switch-case_,
   _while_, _for_, ...
@@ -28,7 +28,9 @@ Implementation of Promises/A+ in Java, plus various language sugars for programm
 
 ### Using Untyped Interface Set
 ```java
-promises.Promises.pf(null)      // Returns fulfilled promises.Promise with null value
+import promises.Promises.pf;
+...
+pf(null)                        // Returns fulfilled promises.Promise with null value
 .then(dummy -> {
     ...
     return "msg";
@@ -50,22 +52,25 @@ promises.Promises.pf(null)      // Returns fulfilled promises.Promise with null 
 
 ### Using Typed Interface Set
 ```java
-promises.typed.Promises.pf(null)                // Returns fulfilled promises.typed.Promise<Object, Object> with null value
+import promises.typed.Promises.pf;
+import promises.typed.Promises.v;
+...
+pf(null)                        // Returns fulfilled promises.typed.Promise<Object, Object> with null value
 .then(dummy -> {
     ...
-    return promises.typed.Promises.v("msg");    // Can be simplified by using static import
-})                                              // Return type: promises.typed.Promise<String, Object>
+    return v("msg");
+})                              // Return type: promises.typed.Promise<String, Object>
 .then(
-    msg -> {                                    // Type of argument 'msg': String
+    msg -> {                    // Type of argument 'msg': String
         ...
-        return promises.typed.Promises.v(123);  // Can be simplified by using static import
+        return v(123);
     },
-    (reason, exception) -> {                    // Type of argument 'reason': Object
+    (reason, exception) -> {    // Type of argument 'reason': Object
         ...
-        return promises.typed.Promises.v(456);  // Can be simplified by using static import
+        return v(456);
     }
-)                                               // Return type: promises.typed.Promise<Integer, Object>
-.then(num -> {                                  // Type of argument 'num': Integer
+)                               // Return type: promises.typed.Promise<Integer, Object>
+.then(num -> {                  // Type of argument 'num': Integer
     ...
 });
 ```
@@ -75,69 +80,88 @@ For simplicity, light-weight promise objects do not contain rejection reasons (o
 avoid specifying reason type parameter.
 
 ```java
-promises.lw.Promises.pf(null)                   // Returns fulfilled promises.lw.P<Object> with null value
+import promises.lw.Promises.pf;
+import promises.lw.Promises.v;
+...
+pf(null)                        // Returns fulfilled promises.lw.P<Object> with null value
 .then(dummy -> {
     ...
-    return promises.lw.Promises.v("msg");       // Can be simplified by using static import
-})                                              // Return type: promises.lw.P<String>
+    return v("msg");
+})                              // Return type: promises.lw.P<String>
 .then(
-    msg -> {                                    // Type of argument 'msg': String
+    msg -> {                    // Type of argument 'msg': String
         ...
-        return promises.lw.Promises.v(123);     // Can be simplified by using static import
+        return v(123);
     },
-    exception -> {                              // Contains throwable-only argument for rejection
+    exception -> {              // Contains throwable-only argument for rejection
         ...
-        return promises.lw.Promises.v(456);     // Can be simplified by using static import
+        return v(456);
     }
-)                                               // Return type: promises.lw.P<Integer>
-.then(num -> {                                  // Type of argument 'num': Integer
+)                               // Return type: promises.lw.P<Integer>
+.then(num -> {                  // Type of argument 'num': Integer
     ...
 });
 ```
 
 ### Multi-argument callbacks
 ```java
-promises.typed.Promises.pf(null)
+import promises.typed.Promises.pf;
+import promises.typed.Promises.r;
+import promises.typed.Promises.v;
+import promises.typed.Promises.wf;
+import promises.typed.Promises.wr;
+...
+pf(null)
 .then(dummy -> {
     ...
     if (correct)
-        return promises.typed.Promises.v("msg", 123);           // Can be simplified by using static import
+        return v("msg", 123);               // Fulfilled with ("msg", 123)
     else
-        return promises.typed.Promises.pr(404, "Not found");    // Can be simplified by using static import
+        return r(404, "Not found", null);   // Rejected with (404, "Not found"), null Throwable
 })
 .then(
-    promises.typed.Promises.wf((msg, num) -> {                  // Types of arguments: (String, Integer), can be simplified by using static import
+    wf((msg, num) -> {                      // Types of arguments: (String, Integer)
         ...
     }),
-    promises.typed.Promises.wr((code, err, exception) -> {      // Types of arguments: (Integer, String, Throwable), can be simplified by using static import
+    wr((code, err, exception) -> {          // Types of arguments: (Integer, String, Throwable)
+        ...
     })
 );
 ```
 
 ### Waits for promises being resolved (fulfilled or rejected)
 ```java
-promises.typed.Promises.pf(null)
+import promises.typed.Promises.pf;
+...
+pf(null)
 .then(...)
 .then(...)
 ...
 .then(...)
 .await(60, TimeUnit.SECONDS);       // Waits for the overall promise chain being resolved
                                     // When the chaining promise is fulfilled, the value would be returned
-                                    // When the chaining promise is rejected, promises.PromiseRejectedException containing return rejected reason/exception would be thrown
+                                    // When the chaining promise is rejected, promises.PromiseRejectedException containing rejected reason/exception would be thrown
                                     // After 60 seconds without resolving, java.util.concurrent.TimeoutException would be thrown
 ```
 
-### Executes a synchronous method (i.e. JDBC operations) on the specified Executor (Thread)
+### Executes a synchronous method (i.e. JDBC operations) on an Executor (Thread)
 
 ```java
-java.util.concurrent.Executor exec = java.util.concurrent.Executors.newSingleThreadExecutor(thread);
+import promises.typed.Promises.async;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+...
+Executor exec = Executors.newSingleThreadExecutor(thread);
 
-promises.typed.Promises.async(exec, () -> {
+async(exec, () -> {
     ...
-    java.sql.Connection conn = dataSource.getConnection();
-    java.sql.PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE name = ?");
+    Connection conn = dataSource.getConnection();
+    PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE name = ?");
     stmt.setString(1, "UserName");
-    java.sql.ResultSet rs = stmt.executeQuery();
+    ResultSet rs = stmt.executeQuery();
     ...
     return "msg";
 })

@@ -20,6 +20,12 @@ public final class ImplUtil
         @Override public final void execute(@Nonnull final Runnable cmd) { cmd.run(); }
     };
     //-----------------------------------------------------------------------------------------------------------------
+    @SuppressWarnings("unchecked")
+    public static <T> T cast(final Object obj)
+    {
+        return (T) obj;
+    }
+    //-----------------------------------------------------------------------------------------------------------------
     static <V> V waitForever() throws InterruptedException
     {
         waitForever.await();
@@ -30,12 +36,6 @@ public final class ImplUtil
     {
         waitForever.await(timeout, unit);
         throw new TimeoutException("Timeout arrived");
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @SuppressWarnings("unchecked")
-    public static <T> T cast(final Object obj)
-    {
-        return (T) obj;
     }
     //-----------------------------------------------------------------------------------------------------------------
     public static String formatString(final String msgFormat, final Object... args)
