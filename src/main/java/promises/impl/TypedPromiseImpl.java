@@ -8,6 +8,9 @@ import promises.FR1;
 import promises.FR2;
 import promises.PromiseRejectedException;
 import promises.PromiseState;
+import promises.impl.store.PromiseStore;
+import promises.impl.store.ResolveAction;
+import promises.impl.store.StoreFacade;
 import promises.lw.P;
 import promises.typed.Promise;
 import promises.typed.Resolution;
@@ -23,8 +26,8 @@ public abstract class TypedPromiseImpl<V, R> extends BasePromiseImpl implements 
         @Override public final TypedPromiseImpl<Object, Object> alwaysPendingPromise() {
             return new TypedPromiseImpl<Object, Object>() {
                 @Override public final PromiseState state() { return PromiseState.PENDING; }
-                @Override final Object getValue() { return null; }
-                @Override final Object getReason() { return null; }
+                @Override public final Object value() { return null; }
+                @Override public final Object reason() { return null; }
                 @Override public final Throwable exception() { return null; }
                 @Override public final Object await() throws InterruptedException { return ImplUtil.waitForever(); }
 
@@ -41,35 +44,35 @@ public abstract class TypedPromiseImpl<V, R> extends BasePromiseImpl implements 
                     return LightWeightPromiseImpl.factory().alwaysPendingPromise();
                 }
 
-                @Override final <VO, RO> Promise<VO, RO> doThen(
+                @Override public final void applyResolveAction(final ResolveAction resAction) {
+                    StoreFacade.setAlwaysPending(resAction);
+                }
+
+                @Override final <VO, RO> TypedPromiseImpl<VO, RO> doThen(
                     final Executor exec,
                     final FR1<? super Object, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled,
                     final FR2<? super Object, Throwable, ? extends Resolution<? extends VO, ? extends RO>> onRejected
                 ) {
                     return TypedPromiseImpl.<VO, RO>factory().alwaysPendingPromise();
                 }
-
-                @Override final void resolveDestination(final ResolvingTask resDstTask) {
-                    resDstTask.onAlwaysPending();
-                }
             };
         }
 
         @Override public final TypedPromiseImpl<Object, Object> pendingPromise(final PromiseStore store) {
             return new TypedPromiseImpl<Object, Object>() {
-                @Override public final PromiseState state() { return store.state; }
-                @Override final Object getValue() { return store.value; }
-                @Override final Object getReason() { return store.reason; }
-                @Override public final Throwable exception() { return store.exception; }
+                @Override public final PromiseState state() { return StoreFacade.state(store); }
+                @Override public final Object value() { return StoreFacade.value(store); }
+                @Override public final Object reason() { return StoreFacade.reason(store); }
+                @Override public final Throwable exception() { return StoreFacade.exception(store); }
 
                 @Override public final Object await() throws PromiseRejectedException, InterruptedException {
-                    return store.await();
+                    return StoreFacade.await(this, store);
                 }
 
                 @Override public final Object await(final long timeout, final TimeUnit unit)
                     throws PromiseRejectedException, InterruptedException, TimeoutException
                 {
-                    return store.await(timeout, unit);
+                    return StoreFacade.await(this, store, timeout, unit);
                 }
 
                 @Override public final promises.Promise toUntypedPromise() {
@@ -80,20 +83,20 @@ public abstract class TypedPromiseImpl<V, R> extends BasePromiseImpl implements 
                     return LightWeightPromiseImpl.factory().pendingPromise(store);
                 }
 
-                @Override final <VO, RO> Promise<VO, RO> doThen(
+                @Override public final void applyResolveAction(final ResolveAction resAction) {
+                    StoreFacade.applyResolveAction(store, resAction);
+                }
+
+                @Override final <VO, RO> TypedPromiseImpl<VO, RO> doThen(
                     final Executor exec,
                     final FR1<? super Object, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled,
                     final FR2<? super Object, Throwable, ? extends Resolution<? extends VO, ? extends RO>> onRejected
                 ) {
-                    return store.doThen(
-                        TypedPromiseImpl.<VO, RO>factory(),
-                        ResolutionSupplier.byOnFullfilled(this, exec, onFulfilled, 0),
-                        ResolutionSupplier.byOnRejected(this, exec, onRejected, 0)
+                    return StoreFacade.doThen(
+                        store, TypedPromiseImpl.<VO, RO>factory(), exec,
+                        onFulfilled, 0,
+                        onRejected, 0
                     );
-                }
-
-                @Override final void resolveDestination(final ResolvingTask resDstTask) {
-                    store.resolveDestination(resDstTask);
                 }
             };
         }
@@ -101,8 +104,8 @@ public abstract class TypedPromiseImpl<V, R> extends BasePromiseImpl implements 
         @Override public final TypedPromiseImpl<Object, Object> fulfilledPromise(final Object value) {
             return new TypedPromiseImpl<Object, Object>() {
                 @Override public final PromiseState state() { return PromiseState.FULFILLED; }
-                @Override final Object getValue() { return value; }
-                @Override final Object getReason() { return null; }
+                @Override public final Object value() { return value; }
+                @Override public final Object reason() { return null; }
                 @Override public final Throwable exception() { return null; }
                 @Override public final Object await() { return value; }
                 @Override public final Object await(final long timeout, final TimeUnit unit) { return value; }
@@ -115,16 +118,19 @@ public abstract class TypedPromiseImpl<V, R> extends BasePromiseImpl implements 
                     return LightWeightPromiseImpl.factory().fulfilledPromise(value);
                 }
 
-                @Override final <VO, RO> Promise<VO, RO> doThen(
+                @Override public final void applyResolveAction(final ResolveAction resAction) {
+                    StoreFacade.setFulfilled(resAction, value);
+                }
+
+                @Override final <VO, RO> TypedPromiseImpl<VO, RO> doThen(
                     final Executor exec,
                     final FR1<? super Object, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled,
                     final FR2<? super Object, Throwable, ? extends Resolution<? extends VO, ? extends RO>> onRejected
                 ) {
-                    return super.fulfilledThen(TypedPromiseImpl.<VO, RO>factory(), exec, onFulfilled, 0);
-                }
-
-                @Override final void resolveDestination(final ResolvingTask resDstTask) {
-                    resDstTask.fulfillChainDstPromise(value);
+                    return StoreFacade.fulfilledChainDstPromise(
+                        TypedPromiseImpl.<VO, RO>factory(),
+                        exec, onFulfilled, 0, value
+                    );
                 }
             };
         }
@@ -133,8 +139,8 @@ public abstract class TypedPromiseImpl<V, R> extends BasePromiseImpl implements 
         rejectedPromise(final Object reason, final Throwable exception) {
             return new TypedPromiseImpl<Object, Object>() {
                 @Override public final PromiseState state() { return PromiseState.REJECTED; }
-                @Override final Object getValue() { return null; }
-                @Override final Object getReason() { return reason; }
+                @Override public final Object value() { return null; }
+                @Override public final Object reason() { return reason; }
                 @Override public final Throwable exception() { return exception; }
 
                 @Override public final Object await() throws PromiseRejectedException {
@@ -154,16 +160,19 @@ public abstract class TypedPromiseImpl<V, R> extends BasePromiseImpl implements 
                     return LightWeightPromiseImpl.factory().rejectedPromise(reason, exception);
                 }
 
-                @Override final <VO, RO> Promise<VO, RO> doThen(
+                @Override public final void applyResolveAction(final ResolveAction resAction) {
+                    StoreFacade.setRejected(resAction, reason, exception);
+                }
+
+                @Override final <VO, RO> TypedPromiseImpl<VO, RO> doThen(
                     final Executor exec,
                     final FR1<? super Object, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled,
                     final FR2<? super Object, Throwable, ? extends Resolution<? extends VO, ? extends RO>> onRejected
                 ) {
-                    return super.rejectedThen(TypedPromiseImpl.<VO, RO>factory(), exec, onRejected, 0);
-                }
-
-                @Override final void resolveDestination(final ResolvingTask resDstTask) {
-                    resDstTask.rejectChainDstPromise(reason, exception);
+                    return StoreFacade.rejectedChainDstPromise(
+                        TypedPromiseImpl.<VO, RO>factory(),
+                        exec, onRejected, 0, reason, exception
+                    );
                 }
             };
         }
@@ -174,19 +183,7 @@ public abstract class TypedPromiseImpl<V, R> extends BasePromiseImpl implements 
         return ImplUtil.cast(factorySingleton);
     }
     //-----------------------------------------------------------------------------------------------------------------
-    @Override
-    public final V value()
-    {
-        return ImplUtil.cast(getValue());
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Override
-    public final R reason()
-    {
-        return ImplUtil.cast(getReason());
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    abstract <VO, RO> Promise<VO, RO> doThen(
+    abstract <VO, RO> TypedPromiseImpl<VO, RO> doThen(
         final Executor exec,
         final FR1<? super V, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled,
         final FR2<? super R, Throwable, ? extends Resolution<? extends VO, ? extends RO>> onRejected

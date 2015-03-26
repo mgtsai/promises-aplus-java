@@ -4,6 +4,7 @@
 // found at http://www.apache.org/licenses/LICENSE-2.0
 //---------------------------------------------------------------------------------------------------------------------
 package promises.impl;
+import promises.impl.store.PromiseStore;
 //---------------------------------------------------------------------------------------------------------------------
 public interface PromiseFactory<P>
 {

@@ -9,6 +9,9 @@ import promises.FR2;
 import promises.Promise;
 import promises.PromiseRejectedException;
 import promises.PromiseState;
+import promises.impl.store.PromiseStore;
+import promises.impl.store.ResolveAction;
+import promises.impl.store.StoreFacade;
 import promises.lw.P;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -21,8 +24,8 @@ public abstract class UntypedPromiseImpl extends BasePromiseImpl implements Prom
         @Override public final UntypedPromiseImpl alwaysPendingPromise() {
             return new UntypedPromiseImpl() {
                 @Override public final PromiseState state() { return PromiseState.PENDING; }
-                @Override final Object getValue() { return null; }
-                @Override final Object getReason() { return null; }
+                @Override public final <V> V value() { return null; }
+                @Override public final <R> R reason() { return null; }
                 @Override public final Throwable exception() { return null; }
 
                 @Override public final <V> V await() throws InterruptedException { return ImplUtil.waitForever(); }
@@ -40,32 +43,32 @@ public abstract class UntypedPromiseImpl extends BasePromiseImpl implements Prom
                     return LightWeightPromiseImpl.<V>factory().alwaysPendingPromise();
                 }
 
+                @Override public final void applyResolveAction(final ResolveAction resAction) {
+                    StoreFacade.setAlwaysPending(resAction);
+                }
+
                 @Override final UntypedPromiseImpl
                 doThen(final Executor exec, final FR1<?, ?> onFulfilled, final FR2<?, Throwable, ?> onRejected) {
                     return factory.alwaysPendingPromise();
-                }
-
-                @Override final void resolveDestination(final ResolvingTask resDstTask) {
-                    resDstTask.onAlwaysPending();
                 }
             };
         }
 
         @Override public final UntypedPromiseImpl pendingPromise(final PromiseStore store) {
             return new UntypedPromiseImpl() {
-                @Override public final PromiseState state() { return store.state; }
-                @Override final Object getValue() { return store.value; }
-                @Override final Object getReason() { return store.reason; }
-                @Override public final Throwable exception() { return store.exception; }
+                @Override public final PromiseState state() { return StoreFacade.state(store); }
+                @Override public final <V> V value() { return ImplUtil.cast(StoreFacade.value(store)); }
+                @Override public final <R> R reason() { return ImplUtil.cast(StoreFacade.reason(store)); }
+                @Override public final Throwable exception() { return StoreFacade.exception(store); }
 
                 @Override public final <V> V await() throws PromiseRejectedException, InterruptedException {
-                    return ImplUtil.cast(store.await());
+                    return ImplUtil.cast(StoreFacade.await(this, store));
                 }
 
                 @Override public final <V> V await(final long timeout, final TimeUnit unit)
                     throws PromiseRejectedException, InterruptedException, TimeoutException
                 {
-                    return ImplUtil.cast(store.await(timeout, unit));
+                    return ImplUtil.cast(StoreFacade.await(this, store, timeout, unit));
                 }
 
                 @Override public final <V, R> promises.typed.Promise<V, R> toTypedPromise() {
@@ -76,17 +79,13 @@ public abstract class UntypedPromiseImpl extends BasePromiseImpl implements Prom
                     return LightWeightPromiseImpl.<V>factory().pendingPromise(store);
                 }
 
-                @Override final UntypedPromiseImpl
-                doThen(final Executor exec, final FR1<?, ?> onFulfilled, final FR2<?, Throwable, ?> onRejected) {
-                    return store.doThen(
-                        factory,
-                        ResolutionSupplier.byOnFullfilled(this, exec, onFulfilled, 0),
-                        ResolutionSupplier.byOnRejected(this, exec, onRejected, 0)
-                    );
+                @Override public final void applyResolveAction(final ResolveAction resAction) {
+                    StoreFacade.applyResolveAction(store, resAction);
                 }
 
-                @Override final void resolveDestination(final ResolvingTask resDstTask) {
-                    store.resolveDestination(resDstTask);
+                @Override final UntypedPromiseImpl
+                doThen(final Executor exec, final FR1<?, ?> onFulfilled, final FR2<?, Throwable, ?> onRejected) {
+                    return StoreFacade.doThen(store, factory, exec, onFulfilled, 0, onRejected, 0);
                 }
             };
         }
@@ -94,8 +93,8 @@ public abstract class UntypedPromiseImpl extends BasePromiseImpl implements Prom
         @Override public final UntypedPromiseImpl fulfilledPromise(final Object value) {
             return new UntypedPromiseImpl() {
                 @Override public final PromiseState state() { return PromiseState.FULFILLED; }
-                @Override final Object getValue() { return value; }
-                @Override final Object getReason() { return null; }
+                @Override public final <V> V value() { return ImplUtil.cast(value); }
+                @Override public final <R> R reason() { return null; }
                 @Override public final Throwable exception() { return null; }
 
                 @Override public final <V> V await() { return ImplUtil.cast(value); }
@@ -112,13 +111,13 @@ public abstract class UntypedPromiseImpl extends BasePromiseImpl implements Prom
                     return LightWeightPromiseImpl.<V>factory().fulfilledPromise(value);
                 }
 
-                @Override final UntypedPromiseImpl
-                doThen(final Executor exec, final FR1<?, ?> onFulfilled, final FR2<?, Throwable, ?> onRejected) {
-                    return super.fulfilledThen(factory, exec, onFulfilled, 0);
+                @Override public final void applyResolveAction(final ResolveAction resAction) {
+                    StoreFacade.setFulfilled(resAction, value);
                 }
 
-                @Override final void resolveDestination(final ResolvingTask resDstTask) {
-                    resDstTask.fulfillChainDstPromise(value);
+                @Override final UntypedPromiseImpl
+                doThen(final Executor exec, final FR1<?, ?> onFulfilled, final FR2<?, Throwable, ?> onRejected) {
+                    return StoreFacade.fulfilledChainDstPromise(factory, exec, onFulfilled, 0, value);
                 }
             };
         }
@@ -126,8 +125,8 @@ public abstract class UntypedPromiseImpl extends BasePromiseImpl implements Prom
         @Override public final UntypedPromiseImpl rejectedPromise(final Object reason, final Throwable exception) {
             return new UntypedPromiseImpl() {
                 @Override public final PromiseState state() { return PromiseState.REJECTED; }
-                @Override final Object getValue() { return null; }
-                @Override final Object getReason() { return reason; }
+                @Override public final <V> V value() { return null; }
+                @Override public final <R> R reason() { return ImplUtil.cast(reason); }
                 @Override public final Throwable exception() { return exception; }
 
                 @Override public final <V> V await() throws PromiseRejectedException {
@@ -147,31 +146,20 @@ public abstract class UntypedPromiseImpl extends BasePromiseImpl implements Prom
                     return LightWeightPromiseImpl.<V>factory().rejectedPromise(reason, exception);
                 }
 
-                @Override final UntypedPromiseImpl
-                doThen(final Executor exec, final FR1<?, ?> onFulfilled, final FR2<?, Throwable, ?> onRejected) {
-                    return super.rejectedThen(factory, exec, onRejected, 0);
+                @Override public final void applyResolveAction(final ResolveAction resAction) {
+                    StoreFacade.setRejected(resAction, reason, exception);
                 }
 
-                @Override final void resolveDestination(final ResolvingTask resDstTask) {
-                    resDstTask.rejectChainDstPromise(reason, exception);
+                @Override final UntypedPromiseImpl
+                doThen(final Executor exec, final FR1<?, ?> onFulfilled, final FR2<?, Throwable, ?> onRejected) {
+                    return StoreFacade.rejectedChainDstPromise(factory, exec, onRejected, 0, reason, exception);
                 }
             };
         }
     };
     //-----------------------------------------------------------------------------------------------------------------
-    @Override
-    public final <V> V value()
-    {
-        return ImplUtil.cast(getValue());
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Override
-    public final <R> R reason()
-    {
-        return ImplUtil.cast(getReason());
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    abstract Promise doThen(final Executor exec, final FR1<?, ?> onFulfilled, final FR2<?, Throwable, ?> onRejected);
+    abstract UntypedPromiseImpl
+    doThen(final Executor exec, final FR1<?, ?> onFulfilled, final FR2<?, Throwable, ?> onRejected);
     //-----------------------------------------------------------------------------------------------------------------
     @Override
     public final Promise then(final Executor exec, final FR1<?, ?> onFulfilled, final FR2<?, Throwable, ?> onRejected)
