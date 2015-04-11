@@ -33,10 +33,10 @@ public class Promises
     public static <V, R> Resolution<V, R> v(final V v)
     {
         return new Resolution<V, R>() {
-            @Override public final PromiseState state() { return PromiseState.FULFILLED; }
-            @Override public final V value() { return v; }
-            @Override public final R reason() { return null; }
-            @Override public final Throwable exception() { return null; }
+            @Override public PromiseState state() { return PromiseState.FULFILLED; }
+            @Override public V value() { return v; }
+            @Override public R reason() { return null; }
+            @Override public Throwable exception() { return null; }
         };
     }
     //-----------------------------------------------------------------------------------------------------------------
@@ -106,10 +106,10 @@ public class Promises
     public static <V, R> Resolution<V, R> r(final R r, final Throwable e)
     {
         return new Resolution<V, R>() {
-            @Override public final PromiseState state() { return PromiseState.REJECTED; }
-            @Override public final V value() { return null; }
-            @Override public final R reason() { return r; }
-            @Override public final Throwable exception() { return e; }
+            @Override public PromiseState state() { return PromiseState.REJECTED; }
+            @Override public V value() { return null; }
+            @Override public R reason() { return r; }
+            @Override public Throwable exception() { return e; }
         };
     }
     //-----------------------------------------------------------------------------------------------------------------
@@ -412,7 +412,7 @@ public class Promises
     wf(final FR2<? super VI1, ? super VI2, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled)
     {
         return new OnFulfilled<M2<VI1, VI2>, VO, RO>() {
-            @Override public final Resolution<? extends VO, ? extends RO> call(final M2<VI1, VI2> v) throws Throwable {
+            @Override public Resolution<? extends VO, ? extends RO> call(final M2<VI1, VI2> v) throws Throwable {
                 if (v != null)
                     return onFulfilled.call(v.v1, v.v2);
                 else
@@ -431,8 +431,7 @@ public class Promises
     wf(final FR3<? super VI1, ? super VI2, ? super VI3, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled)
     {
         return new OnFulfilled<M3<VI1, VI2, VI3>, VO, RO>() {
-            @Override public final Resolution<? extends VO, ? extends RO>
-            call(final M3<VI1, VI2, VI3> v) throws Throwable {
+            @Override public Resolution<? extends VO, ? extends RO> call(final M3<VI1, VI2, VI3> v) throws Throwable {
                 if (v != null)
                     return onFulfilled.call(v.v1, v.v2, v.v3);
                 else
@@ -454,7 +453,7 @@ public class Promises
         > onFulfilled
     ) {
         return new OnFulfilled<M4<VI1, VI2, VI3, VI4>, VO, RO>() {
-            @Override public final Resolution<? extends VO, ? extends RO>
+            @Override public Resolution<? extends VO, ? extends RO>
             call(final M4<VI1, VI2, VI3, VI4> v) throws Throwable {
                 if (v != null)
                     return onFulfilled.call(v.v1, v.v2, v.v3, v.v4);
@@ -477,7 +476,7 @@ public class Promises
         > onFulfilled
     ) {
         return new OnFulfilled<M5<VI1, VI2, VI3, VI4, VI5>, VO, RO>() {
-            @Override public final Resolution<? extends VO, ? extends RO>
+            @Override public Resolution<? extends VO, ? extends RO>
             call(final M5<VI1, VI2, VI3, VI4, VI5> v) throws Throwable {
                 if (v != null)
                     return onFulfilled.call(v.v1, v.v2, v.v3, v.v4, v.v5);
@@ -497,7 +496,7 @@ public class Promises
     wr(final FR3<? super RI1, ? super RI2, Throwable, ? extends Resolution<? extends VO, ? extends RO>> onRejected)
     {
         return new OnRejected<M2<RI1, RI2>, VO, RO>() {
-            @Override public final Resolution<? extends VO, ? extends RO>
+            @Override public Resolution<? extends VO, ? extends RO>
             call(final M2<RI1, RI2> r, final Throwable e) throws Throwable {
                 if (r != null)
                     return onRejected.call(r.v1, r.v2, e);
@@ -520,7 +519,7 @@ public class Promises
         > onRejected
     ) {
         return new OnRejected<M3<RI1, RI2, RI3>, VO, RO>() {
-            @Override public final Resolution<? extends VO, ? extends RO>
+            @Override public Resolution<? extends VO, ? extends RO>
             call(final M3<RI1, RI2, RI3> r, final Throwable e) throws Throwable {
                 if (r != null)
                     return onRejected.call(r.v1, r.v2, r.v3, e);
@@ -543,7 +542,7 @@ public class Promises
         > onRejected
     ) {
         return new OnRejected<M4<RI1, RI2, RI3, RI4>, VO, RO>() {
-            @Override public final Resolution<? extends VO, ? extends RO>
+            @Override public Resolution<? extends VO, ? extends RO>
             call(final M4<RI1, RI2, RI3, RI4> r, final Throwable e) throws Throwable {
                 if (r != null)
                     return onRejected.call(r.v1, r.v2, r.v3, r.v4, e);
@@ -566,7 +565,7 @@ public class Promises
         > onRejected
     ) {
         return new OnRejected<M5<RI1, RI2, RI3, RI4, RI5>, VO, RO>() {
-            @Override public final Resolution<? extends VO, ? extends RO>
+            @Override public Resolution<? extends VO, ? extends RO>
             call(final M5<RI1, RI2, RI3, RI4, RI5> r, final Throwable e) throws Throwable {
                 if (r != null)
                     return onRejected.call(r.v1, r.v2, r.v3, r.v4, r.v5, e);
@@ -591,7 +590,7 @@ public class Promises
         return pf(null).then(
             exec,
             new OnFulfilled<Object, V, R>() {
-                @Override public final Resolution<V, R> call(final Object dummy) throws Throwable {
+                @Override public Resolution<V, R> call(final Object dummy) throws Throwable {
                     return v(onExec.call());
                 }
             }

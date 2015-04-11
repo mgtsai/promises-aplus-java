@@ -3,10 +3,9 @@
 // under the terms of the Apache License, Version 2.0 (ALv2),
 // found at http://www.apache.org/licenses/LICENSE-2.0
 //---------------------------------------------------------------------------------------------------------------------
-package promises.impl.store;
-import promises.impl.PromiseFactory;
+package promises.impl;
 //---------------------------------------------------------------------------------------------------------------------
-final class ResolvedChain<PO> extends ResolveAction
+final class ResolvedChain<PO> implements ResolveAction
 {
     //-----------------------------------------------------------------------------------------------------------------
     private final PromiseFactory<PO> factory;
@@ -19,7 +18,7 @@ final class ResolvedChain<PO> extends ResolveAction
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
-    final void setAlwaysPending()
+    public final void setAlwaysPending()
     {
         synchronized (this) {
             if (dstStore == null) {
@@ -32,7 +31,7 @@ final class ResolvedChain<PO> extends ResolveAction
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
-    final void setFulfilled(final Object value)
+    public final void setFulfilled(final Object value)
     {
         synchronized (this) {
             if (dstStore == null) {
@@ -45,7 +44,7 @@ final class ResolvedChain<PO> extends ResolveAction
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
-    final void setRejected(final Object reason, final Throwable exception)
+    public final void setRejected(final Object reason, final Throwable exception)
     {
         synchronized (this) {
             if (dstStore == null) {
@@ -63,7 +62,7 @@ final class ResolvedChain<PO> extends ResolveAction
             return dstPromise;
         else {
             dstStore = new PromiseStore();
-            return factory.pendingPromise(dstStore);
+            return factory.mutablePromise(dstStore);
         }
     }
     //-----------------------------------------------------------------------------------------------------------------

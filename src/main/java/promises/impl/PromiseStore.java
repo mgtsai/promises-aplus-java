@@ -3,19 +3,17 @@
 // under the terms of the Apache License, Version 2.0 (ALv2),
 // found at http://www.apache.org/licenses/LICENSE-2.0
 //---------------------------------------------------------------------------------------------------------------------
-package promises.impl.store;
-import promises.FR1;
+package promises.impl;
 import promises.InternalException;
 import promises.PromiseRejectedException;
 import promises.PromiseState;
-import promises.impl.PromiseFactory;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 //---------------------------------------------------------------------------------------------------------------------
-public final class PromiseStore extends ResolveAction
+final class PromiseStore implements ResolveAction
 {
     //-----------------------------------------------------------------------------------------------------------------
     private final CountDownLatch waitUntilResolved = new CountDownLatch(1);
@@ -91,13 +89,13 @@ public final class PromiseStore extends ResolveAction
         }
     }
     //-----------------------------------------------------------------------------------------------------------------
-    final <VI, RCI, PO> PO doThen(
+    final <VCI, RCI, PO> PO doThen(
         final PromiseFactory<PO> factory,
         final Executor exec,
-        final FulfilledResolver<VI, PO> fulResolver,
-        final FR1<VI, ?> onFulfilled,
+        final FulfilledResolver<VCI> fulResolver,
+        final VCI onFulfilled,
         final int onFulStackDiff,
-        final RejectedResolver<RCI, PO> rejResolver,
+        final RejectedResolver<RCI> rejResolver,
         final RCI onRejected,
         final int onRejStackDiff
     ) {
@@ -106,20 +104,18 @@ public final class PromiseStore extends ResolveAction
                 final PromiseStore chainDstStore = new PromiseStore();
 
                 inSyncAddToPendingActionQ(new ResolveAction() {
-                    @Override public final void setAlwaysPending() {
-                        chainDstStore.setAlwaysPending();
+                    @Override public void setAlwaysPending() { chainDstStore.setAlwaysPending(); }
+
+                    @Override public void setFulfilled(final Object value) {
+                        fulResolver.execAndResolve(exec, onFulfilled, onFulStackDiff, value, chainDstStore);
                     }
 
-                    @Override public final void setFulfilled(final Object v) {
-                        fulResolver.resolve(exec, onFulfilled, onFulStackDiff, v, chainDstStore);
-                    }
-
-                    @Override public final void setRejected(final Object reason, final Throwable exception) {
+                    @Override public void setRejected(final Object reason, final Throwable exception) {
                         rejResolver.resolve(exec, onRejected, onRejStackDiff, reason, exception, chainDstStore);
                     }
                 });
 
-                return factory.pendingPromise(chainDstStore);
+                return factory.mutablePromise(chainDstStore);
             }
         }
 
@@ -136,14 +132,13 @@ public final class PromiseStore extends ResolveAction
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
-    final void setAlwaysPending()
+    public final void setAlwaysPending()
     {
         synchronized (this) {
-            if (state != PromiseState.PENDING)
-                throw new InternalException("Not allowed setting always pending after this promise is resolved.");
-
             if (isAlwaysPending)
-                return;
+                throw new InternalException("Not allowed setting always pending more than once");
+            if (state != PromiseState.PENDING)
+                throw new InternalException("Not allowed setting always pending after this promise is resolved");
 
             isAlwaysPending = true;
         }
@@ -156,48 +151,48 @@ public final class PromiseStore extends ResolveAction
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
-    final void setFulfilled(final Object value)
+    public final void setFulfilled(final Object value)
     {
         synchronized (this) {
             if (isAlwaysPending)
                 throw new InternalException("Unexpected fulfilling this always-pending promise");
+            if (state != PromiseState.PENDING)
+                throw new InternalException("Not allowed fulfilling this resolved promise");
 
             this.state = PromiseState.FULFILLED;
             this.value = value;
-
-            waitUntilResolved.countDown();
-
-            if (pendingActionQ == null)
-                return;
         }
 
-        for (final ResolveAction action : pendingActionQ)
-            action.setFulfilled(value);
+        waitUntilResolved.countDown();
 
-        pendingActionQ = null;
+        if (pendingActionQ != null) {
+            for (final ResolveAction action : pendingActionQ)
+                action.setFulfilled(value);
+            pendingActionQ = null;
+        }
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
-    final void setRejected(final Object reason, final Throwable exception)
+    public final void setRejected(final Object reason, final Throwable exception)
     {
         synchronized (this) {
             if (isAlwaysPending)
                 throw new InternalException("Unexpected rejecting this always-pending promise");
+            if (state != PromiseState.PENDING)
+                throw new InternalException("Not allowed rejecting this resolved promise");
 
             this.state = PromiseState.REJECTED;
             this.reason = reason;
             this.exception = exception;
-
-            waitUntilResolved.countDown();
-
-            if (pendingActionQ == null)
-                return;
         }
 
-        for (final ResolveAction action : pendingActionQ)
-            action.setRejected(reason, exception);
+        waitUntilResolved.countDown();
 
-        pendingActionQ = null;
+        if (pendingActionQ != null) {
+            for (final ResolveAction action : pendingActionQ)
+                action.setRejected(reason, exception);
+            pendingActionQ = null;
+        }
     }
     //-----------------------------------------------------------------------------------------------------------------
 }

@@ -5,16 +5,14 @@
 //---------------------------------------------------------------------------------------------------------------------
 package promises.impl;
 //---------------------------------------------------------------------------------------------------------------------
-public interface PromiseFactory<P>
+public interface ResolveAction
 {
     //-----------------------------------------------------------------------------------------------------------------
-    public abstract P fulfilledPromise(final Object value);
+    public abstract void setAlwaysPending();
     //-----------------------------------------------------------------------------------------------------------------
-    public abstract P rejectedPromise(final Object reason, final Throwable exception);
+    public abstract void setFulfilled(final Object value);
     //-----------------------------------------------------------------------------------------------------------------
-    public abstract P alwaysPendingPromise();
-    //-----------------------------------------------------------------------------------------------------------------
-    public abstract P mutablePromise(final PromiseStore store);
+    public abstract void setRejected(final Object reason, final Throwable exception);
     //-----------------------------------------------------------------------------------------------------------------
 }
 //---------------------------------------------------------------------------------------------------------------------

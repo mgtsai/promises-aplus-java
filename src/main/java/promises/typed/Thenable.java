@@ -24,7 +24,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
     resolvePromise2(final ResolvePromise<M2<? extends V1, ? extends V2>, R> resP)
     {
         return new ResolvePromise2<V1, V2, R>() {
-            @Override public final void resolve(
+            @Override public void resolve(
                 final Resolution<
                     ? extends M2<? extends V1, ? extends V2>,
                     ? extends R
@@ -33,7 +33,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
                 resP.resolve(res);
             }
 
-            @Override public final void resolve(final V1 v1, final V2 v2) {
+            @Override public void resolve(final V1 v1, final V2 v2) {
                 resP.resolve(new M2<V1, V2>(v1, v2));
             }
         };
@@ -43,7 +43,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
     resolvePromise3(final ResolvePromise<M3<? extends V1, ? extends V2, ? extends V3>, R> resP)
     {
         return new ResolvePromise3<V1, V2, V3, R>() {
-            @Override public final void resolve(
+            @Override public void resolve(
                 final Resolution<
                     ? extends M3<? extends V1, ? extends V2, ? extends V3>,
                     ? extends R
@@ -52,7 +52,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
                 resP.resolve(res);
             }
 
-            @Override public final void resolve(final V1 v1, final V2 v2, final V3 v3) {
+            @Override public void resolve(final V1 v1, final V2 v2, final V3 v3) {
                 resP.resolve(new M3<V1, V2, V3>(v1, v2, v3));
             }
         };
@@ -62,7 +62,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
     resolvePromise4(final ResolvePromise<M4<? extends V1, ? extends V2, ? extends V3, ? extends V4>, R> resP)
     {
         return new ResolvePromise4<V1, V2, V3, V4, R>() {
-            @Override public final void resolve(
+            @Override public void resolve(
                 final Resolution<
                     ? extends M4<? extends V1, ? extends V2, ? extends V3, ? extends V4>,
                     ? extends R
@@ -71,7 +71,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
                 resP.resolve(res);
             }
 
-            @Override public final void resolve(final V1 v1, final V2 v2, final V3 v3, final V4 v4) {
+            @Override public void resolve(final V1 v1, final V2 v2, final V3 v3, final V4 v4) {
                 resP.resolve(new M4<V1, V2, V3, V4>(v1, v2, v3, v4));
             }
         };
@@ -82,7 +82,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
         final ResolvePromise<M5<? extends V1, ? extends V2, ? extends V3, ? extends V4, ? extends V5>, R> resP
     ) {
         return new ResolvePromise5<V1, V2, V3, V4, V5, R>() {
-            @Override public final void resolve(
+            @Override public void resolve(
                 final Resolution<
                     ? extends M5<? extends V1, ? extends V2, ? extends V3, ? extends V4, ? extends V5>,
                     ? extends R
@@ -91,7 +91,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
                 resP.resolve(res);
             }
 
-            @Override public final void resolve(final V1 v1, final V2 v2, final V3 v3, final V4 v4, final V5 v5) {
+            @Override public void resolve(final V1 v1, final V2 v2, final V3 v3, final V4 v4, final V5 v5) {
                 resP.resolve(new M5<V1, V2, V3, V4, V5>(v1, v2, v3, v4, v5));
             }
         };
@@ -101,15 +101,15 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
     rejectPromise2(final RejectPromise<M2<? extends R1, ? extends R2>> rejP)
     {
         return new RejectPromise2<R1, R2>() {
-            @Override public final void reject(final R1 r1, final R2 r2, final Throwable e) {
+            @Override public void reject(final R1 r1, final R2 r2, final Throwable e) {
                 rejP.reject(new M2<R1, R2>(r1, r2), e);
             }
 
-            @Override public final void reject(final R1 r1, final R2 r2) {
+            @Override public void reject(final R1 r1, final R2 r2) {
                 rejP.reject(new M2<R1, R2>(r1, r2));
             }
 
-            @Override public final void reject(final Throwable e) {
+            @Override public void reject(final Throwable e) {
                 rejP.reject(e);
             }
         };
@@ -119,15 +119,15 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
     rejectPromise3(final RejectPromise<M3<? extends R1, ? extends R2, ? extends R3>> rejP)
     {
         return new RejectPromise3<R1, R2, R3>() {
-            @Override public final void reject(final R1 r1, final R2 r2, final R3 r3, final Throwable e) {
+            @Override public void reject(final R1 r1, final R2 r2, final R3 r3, final Throwable e) {
                 rejP.reject(new M3<R1, R2, R3>(r1, r2, r3), e);
             }
 
-            @Override public final void reject(final R1 r1, final R2 r2, final R3 r3) {
+            @Override public void reject(final R1 r1, final R2 r2, final R3 r3) {
                 rejP.reject(new M3<R1, R2, R3>(r1, r2, r3));
             }
 
-            @Override public final void reject(final Throwable e) {
+            @Override public void reject(final Throwable e) {
                 rejP.reject(e);
             }
         };
@@ -137,15 +137,15 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
     rejectPromise4(final RejectPromise<M4<? extends R1, ? extends R2, ? extends R3, ? extends R4>> rejP)
     {
         return new RejectPromise4<R1, R2, R3, R4>() {
-            @Override public final void reject(final R1 r1, final R2 r2, final R3 r3, final R4 r4, final Throwable e) {
+            @Override public void reject(final R1 r1, final R2 r2, final R3 r3, final R4 r4, final Throwable e) {
                 rejP.reject(new M4<R1, R2, R3, R4>(r1, r2, r3, r4), e);
             }
 
-            @Override public final void reject(final R1 r1, final R2 r2, final R3 r3, final R4 r4) {
+            @Override public void reject(final R1 r1, final R2 r2, final R3 r3, final R4 r4) {
                 rejP.reject(new M4<R1, R2, R3, R4>(r1, r2, r3, r4));
             }
 
-            @Override public final void reject(final Throwable e) {
+            @Override public void reject(final Throwable e) {
                 rejP.reject(e);
             }
         };
@@ -155,16 +155,16 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
     rejectPromise5(final RejectPromise<M5<? extends R1, ? extends R2, ? extends R3, ? extends R4, ? extends R5>> rejP)
     {
         return new RejectPromise5<R1, R2, R3, R4, R5>() {
-            @Override public final void
+            @Override public void
             reject(final R1 r1, final R2 r2, final R3 r3, final R4 r4, final R5 r5, final Throwable e) {
                 rejP.reject(new M5<R1, R2, R3, R4, R5>(r1, r2, r3, r4, r5), e);
             }
 
-            @Override public final void reject(final R1 r1, final R2 r2, final R3 r3, final R4 r4, final R5 r5) {
+            @Override public void reject(final R1 r1, final R2 r2, final R3 r3, final R4 r4, final R5 r5) {
                 rejP.reject(new M5<R1, R2, R3, R4, R5>(r1, r2, r3, r4, r5));
             }
 
-            @Override public final void reject(final Throwable e) {
+            @Override public void reject(final Throwable e) {
                 rejP.reject(e);
             }
         };
@@ -180,8 +180,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
     of(final F2<ResolvePromise<V, R>, RejectPromise<R>> then)
     {
         return new Thenable<V, R>() {
-            @Override public final void
-            then(final ResolvePromise<V, R> resP, final RejectPromise<R> rejP) throws Throwable {
+            @Override public void then(final ResolvePromise<V, R> resP, final RejectPromise<R> rejP) throws Throwable {
                 then.call(resP, rejP);
             }
         };
@@ -202,7 +201,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
         > then
     ) {
         return new Thenable<V, M2<? extends R1, ? extends R2>>() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<V, M2<? extends R1, ? extends R2>> resP,
                 final RejectPromise<M2<? extends R1, ? extends R2>> rejP
             ) throws Throwable {
@@ -226,7 +225,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
         > then
     ) {
         return new Thenable<V, M3<? extends R1, ? extends R2, ? extends R3>>() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<V, M3<? extends R1, ? extends R2, ? extends R3>> resP,
                 final RejectPromise<M3<? extends R1, ? extends R2, ? extends R3>> rejP
             ) throws Throwable {
@@ -250,7 +249,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
         > then
     ) {
         return new Thenable<V, M4<? extends R1, ? extends R2, ? extends R3, ? extends R4>>() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<V, M4<? extends R1, ? extends R2, ? extends R3, ? extends R4>> resP,
                 final RejectPromise<M4<? extends R1, ? extends R2, ? extends R3, ? extends R4>> rejP
             ) throws Throwable {
@@ -274,7 +273,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
         > then
     ) {
         return new Thenable<V, M5<? extends R1, ? extends R2, ? extends R3, ? extends R4, ? extends R5>>() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<V, M5<? extends R1, ? extends R2, ? extends R3, ? extends R4, ? extends R5>> resP,
                 final RejectPromise<M5<? extends R1, ? extends R2, ? extends R3, ? extends R4, ? extends R5>> rejP
             ) throws Throwable {
@@ -294,7 +293,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
     of_2_1(final F2<ResolvePromise2<V1, V2, R>, RejectPromise<R>> then)
     {
         return new Thenable<M2<? extends V1, ? extends V2>, R>() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<M2<? extends V1, ? extends V2>, R> resP,
                 final RejectPromise<R> rejP
             ) throws Throwable {
@@ -323,7 +322,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
             M2<? extends V1, ? extends V2>,
             M2<? extends R1, ? extends R2>
         >() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<
                     M2<? extends V1, ? extends V2>,
                     M2<? extends R1, ? extends R2>
@@ -355,7 +354,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
             M2<? extends V1, ? extends V2>,
             M3<? extends R1, ? extends R2, ? extends R3>
         >() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<
                     M2<? extends V1, ? extends V2>,
                     M3<? extends R1, ? extends R2, ? extends R3>
@@ -387,7 +386,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
             M2<? extends V1, ? extends V2>,
             M4<? extends R1, ? extends R2, ? extends R3, ? extends R4>
         >() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<
                     M2<? extends V1, ? extends V2>,
                     M4<? extends R1, ? extends R2, ? extends R3, ? extends R4>
@@ -419,7 +418,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
             M2<? extends V1, ? extends V2>,
             M5<? extends R1, ? extends R2, ? extends R3, ? extends R4, ? extends R5>
         >() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<
                     M2<? extends V1, ? extends V2>,
                     M5<? extends R1, ? extends R2, ? extends R3, ? extends R4, ? extends R5>
@@ -442,7 +441,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
     of_3_1(final F2<ResolvePromise3<V1, V2, V3, R>, RejectPromise<R>> then)
     {
         return new Thenable<M3<? extends V1, ? extends V2, ? extends V3>, R>() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<M3<? extends V1, ? extends V2, ? extends V3>, R> resP,
                 final RejectPromise<R> rejP
             ) throws Throwable {
@@ -471,7 +470,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
             M3<? extends V1, ? extends V2, ? extends V3>,
             M2<? extends R1, ? extends R2>
         >() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<
                     M3<? extends V1, ? extends V2, ? extends V3>,
                     M2<? extends R1, ? extends R2>
@@ -503,7 +502,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
             M3<? extends V1, ? extends V2, ? extends V3>,
             M3<? extends R1, ? extends R2, ? extends R3>
         >() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<
                     M3<? extends V1, ? extends V2, ? extends V3>,
                     M3<? extends R1, ? extends R2, ? extends R3>
@@ -535,7 +534,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
             M3<? extends V1, ? extends V2, ? extends V3>,
             M4<? extends R1, ? extends R2, ? extends R3, ? extends R4>
         >() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<
                     M3<? extends V1, ? extends V2, ? extends V3>,
                     M4<? extends R1, ? extends R2, ? extends R3, ? extends R4>
@@ -567,7 +566,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
             M3<? extends V1, ? extends V2, ? extends V3>,
             M5<? extends R1, ? extends R2, ? extends R3, ? extends R4, ? extends R5>
         >() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<
                     M3<? extends V1, ? extends V2, ? extends V3>,
                     M5<? extends R1, ? extends R2, ? extends R3, ? extends R4, ? extends R5>
@@ -590,7 +589,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
     of_4_1(final F2<ResolvePromise4<V1, V2, V3, V4, R>, RejectPromise<R>> then)
     {
         return new Thenable<M4<? extends V1, ? extends V2, ? extends V3, ? extends V4>, R>() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<M4<? extends V1, ? extends V2, ? extends V3, ? extends V4>, R> resP,
                 final RejectPromise<R> rejP
             ) throws Throwable {
@@ -619,7 +618,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
             M4<? extends V1, ? extends V2, ? extends V3, ? extends V4>,
             M2<? extends R1, ? extends R2>
         >() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<
                     M4<? extends V1, ? extends V2, ? extends V3, ? extends V4>,
                     M2<? extends R1, ? extends R2>
@@ -651,7 +650,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
             M4<? extends V1, ? extends V2, ? extends V3, ? extends V4>,
             M3<? extends R1, ? extends R2, ? extends R3>
         >() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<
                     M4<? extends V1, ? extends V2, ? extends V3, ? extends V4>,
                     M3<? extends R1, ? extends R2, ? extends R3>
@@ -683,7 +682,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
             M4<? extends V1, ? extends V2, ? extends V3, ? extends V4>,
             M4<? extends R1, ? extends R2, ? extends R3, ? extends R4>
         >() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<
                     M4<? extends V1, ? extends V2, ? extends V3, ? extends V4>,
                     M4<? extends R1, ? extends R2, ? extends R3, ? extends R4>
@@ -715,7 +714,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
             M4<? extends V1, ? extends V2, ? extends V3, ? extends V4>,
             M5<? extends R1, ? extends R2, ? extends R3, ? extends R4, ? extends R5>
         >() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<
                     M4<? extends V1, ? extends V2, ? extends V3, ? extends V4>,
                     M5<? extends R1, ? extends R2, ? extends R3, ? extends R4, ? extends R5>
@@ -739,7 +738,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
     {
         return new Thenable<M5<? extends V1, ? extends V2, ? extends V3, ? extends V4, ? extends V5>, R>()
         {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<M5<? extends V1, ? extends V2, ? extends V3, ? extends V4, ? extends V5>, R> resP,
                 final RejectPromise<R> rejP
             ) throws Throwable {
@@ -768,7 +767,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
             M5<? extends V1, ? extends V2, ? extends V3, ? extends V4, ? extends V5>,
             M2<? extends R1, ? extends R2>
         >() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<
                     M5<? extends V1, ? extends V2, ? extends V3, ? extends V4, ? extends V5>,
                     M2<? extends R1, ? extends R2>
@@ -800,7 +799,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
             M5<? extends V1, ? extends V2, ? extends V3, ? extends V4, ? extends V5>,
             M3<? extends R1, ? extends R2, ? extends R3>
         >() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<
                     M5<? extends V1, ? extends V2, ? extends V3, ? extends V4, ? extends V5>,
                     M3<? extends R1, ? extends R2, ? extends R3>
@@ -832,7 +831,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
             M5<? extends V1, ? extends V2, ? extends V3, ? extends V4, ? extends V5>,
             M4<? extends R1, ? extends R2, ? extends R3, ? extends R4>
         >() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<
                     M5<? extends V1, ? extends V2, ? extends V3, ? extends V4, ? extends V5>,
                     M4<? extends R1, ? extends R2, ? extends R3, ? extends R4>
@@ -864,7 +863,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
             M5<? extends V1, ? extends V2, ? extends V3, ? extends V4, ? extends V5>,
             M5<? extends R1, ? extends R2, ? extends R3, ? extends R4, ? extends R5>
         >() {
-            @Override public final void then(
+            @Override public void then(
                 final ResolvePromise<
                     M5<? extends V1, ? extends V2, ? extends V3, ? extends V4, ? extends V5>,
                     M5<? extends R1, ? extends R2, ? extends R3, ? extends R4, ? extends R5>

@@ -3,17 +3,16 @@
 // under the terms of the Apache License, Version 2.0 (ALv2),
 // found at http://www.apache.org/licenses/LICENSE-2.0
 //---------------------------------------------------------------------------------------------------------------------
-package promises;
-import org.junit.Test;
+package promises.impl;
 //---------------------------------------------------------------------------------------------------------------------
-public class UntypedPromiseTest
+public final class OnePass
 {
     //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    public final void testThenBeforeFulfilled()
+    private boolean isPassed = false;
+    //-----------------------------------------------------------------------------------------------------------------
+    public final synchronized boolean pass()
     {
-        Promises.pn()
-        .then(null);
+        return !isPassed && (isPassed = true);
     }
     //-----------------------------------------------------------------------------------------------------------------
 }

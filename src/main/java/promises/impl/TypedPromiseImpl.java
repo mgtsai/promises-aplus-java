@@ -8,9 +8,6 @@ import promises.FR1;
 import promises.FR2;
 import promises.PromiseRejectedException;
 import promises.PromiseState;
-import promises.impl.store.PromiseStore;
-import promises.impl.store.ResolveAction;
-import promises.impl.store.StoreFacade;
 import promises.lw.P;
 import promises.typed.Promise;
 import promises.typed.Resolution;
@@ -23,32 +20,33 @@ public abstract class TypedPromiseImpl<V, R> extends BasePromiseImpl implements 
     //-----------------------------------------------------------------------------------------------------------------
     private static final PromiseFactory<TypedPromiseImpl<Object, Object>>
     factorySingleton = new PromiseFactory<TypedPromiseImpl<Object, Object>>() {
-        @Override public final TypedPromiseImpl<Object, Object> alwaysPendingPromise() {
+        @Override public TypedPromiseImpl<Object, Object> alwaysPendingPromise() {
             return new TypedPromiseImpl<Object, Object>() {
-                @Override public final PromiseState state() { return PromiseState.PENDING; }
-                @Override public final Object value() { return null; }
-                @Override public final Object reason() { return null; }
-                @Override public final Throwable exception() { return null; }
-                @Override public final Object await() throws InterruptedException { return ImplUtil.waitForever(); }
+                @Override String type() { return "TYPED-ALWAYS-PENDING"; }
+                @Override public PromiseState state() { return PromiseState.PENDING; }
+                @Override public Object value() { return null; }
+                @Override public Object reason() { return null; }
+                @Override public Throwable exception() { return null; }
+                @Override public Object await() throws InterruptedException { return ImplUtil.waitForever(); }
 
-                @Override public final Object
+                @Override public Object
                 await(final long timeout, final TimeUnit unit) throws InterruptedException, TimeoutException {
                     return ImplUtil.waitTimeout(timeout, unit);
                 }
 
-                @Override public final promises.Promise toUntypedPromise() {
+                @Override public promises.Promise toUntypedPromise() {
                     return UntypedPromiseImpl.factory.alwaysPendingPromise();
                 }
 
-                @Override public final P<Object> toLightWeightPromise() {
+                @Override public P<Object> toLightWeightPromise() {
                     return LightWeightPromiseImpl.factory().alwaysPendingPromise();
                 }
 
-                @Override public final void applyResolveAction(final ResolveAction resAction) {
-                    StoreFacade.setAlwaysPending(resAction);
+                @Override void applyResolveAction(final ResolveAction resAction) {
+                    resAction.setAlwaysPending();
                 }
 
-                @Override final <VO, RO> TypedPromiseImpl<VO, RO> doThen(
+                @Override <VO, RO> TypedPromiseImpl<VO, RO> doThen(
                     final Executor exec,
                     final FR1<? super Object, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled,
                     final FR2<? super Object, Throwable, ? extends Resolution<? extends VO, ? extends RO>> onRejected
@@ -58,121 +56,120 @@ public abstract class TypedPromiseImpl<V, R> extends BasePromiseImpl implements 
             };
         }
 
-        @Override public final TypedPromiseImpl<Object, Object> pendingPromise(final PromiseStore store) {
+        @Override public TypedPromiseImpl<Object, Object> mutablePromise(final PromiseStore store) {
             return new TypedPromiseImpl<Object, Object>() {
-                @Override public final PromiseState state() { return StoreFacade.state(store); }
-                @Override public final Object value() { return StoreFacade.value(store); }
-                @Override public final Object reason() { return StoreFacade.reason(store); }
-                @Override public final Throwable exception() { return StoreFacade.exception(store); }
+                @Override String type() { return "TYPED-PENDING"; }
+                @Override public PromiseState state() { return store.state; }
+                @Override public Object value() { return store.value; }
+                @Override public Object reason() { return store.reason; }
+                @Override public Throwable exception() { return store.exception; }
 
-                @Override public final Object await() throws PromiseRejectedException, InterruptedException {
-                    return StoreFacade.await(this, store);
+                @Override public Object await() throws PromiseRejectedException, InterruptedException {
+                    return store.await(this);
                 }
 
-                @Override public final Object await(final long timeout, final TimeUnit unit)
+                @Override public Object await(final long timeout, final TimeUnit unit)
                     throws PromiseRejectedException, InterruptedException, TimeoutException
                 {
-                    return StoreFacade.await(this, store, timeout, unit);
+                    return store.await(this, timeout, unit);
                 }
 
-                @Override public final promises.Promise toUntypedPromise() {
-                    return UntypedPromiseImpl.factory.pendingPromise(store);
+                @Override public promises.Promise toUntypedPromise() {
+                    return UntypedPromiseImpl.factory.mutablePromise(store);
                 }
 
-                @Override public final P<Object> toLightWeightPromise() {
-                    return LightWeightPromiseImpl.factory().pendingPromise(store);
+                @Override public P<Object> toLightWeightPromise() {
+                    return LightWeightPromiseImpl.factory().mutablePromise(store);
                 }
 
-                @Override public final void applyResolveAction(final ResolveAction resAction) {
-                    StoreFacade.applyResolveAction(store, resAction);
+                @Override void applyResolveAction(final ResolveAction resAction) {
+                    store.applyResolveAction(resAction);
                 }
 
-                @Override final <VO, RO> TypedPromiseImpl<VO, RO> doThen(
+                @Override <VO, RO> TypedPromiseImpl<VO, RO> doThen(
                     final Executor exec,
                     final FR1<? super Object, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled,
                     final FR2<? super Object, Throwable, ? extends Resolution<? extends VO, ? extends RO>> onRejected
                 ) {
-                    return StoreFacade.doThen(
-                        store, TypedPromiseImpl.<VO, RO>factory(), exec,
-                        onFulfilled, 0,
-                        onRejected, 0
+                    return store.doThen(
+                        TypedPromiseImpl.<VO, RO>factory(), exec,
+                        FulfilledResolver.of(onFulfilled), onFulfilled, 0,
+                        RejectedResolver.of(onRejected), onRejected, 0
                     );
                 }
             };
         }
 
-        @Override public final TypedPromiseImpl<Object, Object> fulfilledPromise(final Object value) {
+        @Override public TypedPromiseImpl<Object, Object> fulfilledPromise(final Object value) {
             return new TypedPromiseImpl<Object, Object>() {
-                @Override public final PromiseState state() { return PromiseState.FULFILLED; }
-                @Override public final Object value() { return value; }
-                @Override public final Object reason() { return null; }
-                @Override public final Throwable exception() { return null; }
-                @Override public final Object await() { return value; }
-                @Override public final Object await(final long timeout, final TimeUnit unit) { return value; }
+                @Override String type() { return "TYPED-FULFILLED"; }
+                @Override public PromiseState state() { return PromiseState.FULFILLED; }
+                @Override public Object value() { return value; }
+                @Override public Object reason() { return null; }
+                @Override public Throwable exception() { return null; }
+                @Override public Object await() { return value; }
+                @Override public Object await(final long timeout, final TimeUnit unit) { return value; }
 
-                @Override public final promises.Promise toUntypedPromise() {
+                @Override public promises.Promise toUntypedPromise() {
                     return UntypedPromiseImpl.factory.fulfilledPromise(value);
                 }
 
-                @Override public final P<Object> toLightWeightPromise() {
+                @Override public P<Object> toLightWeightPromise() {
                     return LightWeightPromiseImpl.factory().fulfilledPromise(value);
                 }
 
-                @Override public final void applyResolveAction(final ResolveAction resAction) {
-                    StoreFacade.setFulfilled(resAction, value);
+                @Override void applyResolveAction(final ResolveAction resAction) {
+                    resAction.setFulfilled(value);
                 }
 
-                @Override final <VO, RO> TypedPromiseImpl<VO, RO> doThen(
+                @Override <VO, RO> TypedPromiseImpl<VO, RO> doThen(
                     final Executor exec,
                     final FR1<? super Object, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled,
                     final FR2<? super Object, Throwable, ? extends Resolution<? extends VO, ? extends RO>> onRejected
                 ) {
-                    return StoreFacade.fulfilledChainDstPromise(
-                        TypedPromiseImpl.<VO, RO>factory(),
-                        exec, onFulfilled, 0, value
-                    );
+                    return FulfilledResolver.of(onFulfilled)
+                        .chainDstPromise(TypedPromiseImpl.<VO, RO>factory(), exec, onFulfilled, 0, value);
                 }
             };
         }
 
-        @Override public final TypedPromiseImpl<Object, Object>
+        @Override public TypedPromiseImpl<Object, Object>
         rejectedPromise(final Object reason, final Throwable exception) {
             return new TypedPromiseImpl<Object, Object>() {
-                @Override public final PromiseState state() { return PromiseState.REJECTED; }
-                @Override public final Object value() { return null; }
-                @Override public final Object reason() { return reason; }
-                @Override public final Throwable exception() { return exception; }
+                @Override String type() { return "TYPED-REJECTED"; }
+                @Override public PromiseState state() { return PromiseState.REJECTED; }
+                @Override public Object value() { return null; }
+                @Override public Object reason() { return reason; }
+                @Override public Throwable exception() { return exception; }
 
-                @Override public final Object await() throws PromiseRejectedException {
+                @Override public Object await() throws PromiseRejectedException {
                     throw new PromiseRejectedException(this, reason, exception);
                 }
 
-                @Override public final Object
+                @Override public Object
                 await(final long timeout, final TimeUnit unit) throws PromiseRejectedException {
                     throw new PromiseRejectedException(this, reason, exception);
                 }
 
-                @Override public final promises.Promise toUntypedPromise() {
+                @Override public promises.Promise toUntypedPromise() {
                     return UntypedPromiseImpl.factory.rejectedPromise(reason, exception);
                 }
 
-                @Override public final P<Object> toLightWeightPromise() {
+                @Override public P<Object> toLightWeightPromise() {
                     return LightWeightPromiseImpl.factory().rejectedPromise(reason, exception);
                 }
 
-                @Override public final void applyResolveAction(final ResolveAction resAction) {
-                    StoreFacade.setRejected(resAction, reason, exception);
+                @Override void applyResolveAction(final ResolveAction resAction) {
+                    resAction.setRejected(reason, exception);
                 }
 
-                @Override final <VO, RO> TypedPromiseImpl<VO, RO> doThen(
+                @Override <VO, RO> TypedPromiseImpl<VO, RO> doThen(
                     final Executor exec,
                     final FR1<? super Object, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled,
                     final FR2<? super Object, Throwable, ? extends Resolution<? extends VO, ? extends RO>> onRejected
                 ) {
-                    return StoreFacade.rejectedChainDstPromise(
-                        TypedPromiseImpl.<VO, RO>factory(),
-                        exec, onRejected, 0, reason, exception
-                    );
+                    return RejectedResolver.of(onRejected)
+                        .chainDstPromise(TypedPromiseImpl.<VO, RO>factory(), exec, onRejected, 0, reason, exception);
                 }
             };
         }
@@ -195,14 +192,14 @@ public abstract class TypedPromiseImpl<V, R> extends BasePromiseImpl implements 
         final FR1<? super V, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled,
         final FR2<? super R, Throwable, ? extends Resolution<? extends VO, ? extends RO>> onRejected
     ) {
-        return doThen(executor(exec), onFulfilled, onRejected);
+        return doThen(ImplUtil.executor(exec), onFulfilled, onRejected);
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
     public final <VO, RO> Promise<VO, RO>
     then(final Executor exec, final FR1<? super V, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled)
     {
-        return doThen(executor(exec), onFulfilled, null);
+        return doThen(ImplUtil.executor(exec), onFulfilled, null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override

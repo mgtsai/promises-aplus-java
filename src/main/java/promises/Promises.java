@@ -322,7 +322,7 @@ public class Promises
     public static <VI1, VI2> OnFulfilled<M2<VI1, VI2>> wf(final FR2<? super VI1, ? super VI2, ?> onFulfilled)
     {
         return new OnFulfilled<M2<VI1, VI2>>() {
-            @Override public final Object call(final M2<VI1, VI2> v) throws Throwable {
+            @Override public Object call(final M2<VI1, VI2> v) throws Throwable {
                 if (v != null)
                     return onFulfilled.call(v.v1, v.v2);
                 else
@@ -341,7 +341,7 @@ public class Promises
     wf(final FR3<? super VI1, ? super VI2, ? super VI3, ?> onFulfilled)
     {
         return new OnFulfilled<M3<VI1, VI2, VI3>>() {
-            @Override public final Object call(final M3<VI1, VI2, VI3> v) throws Throwable {
+            @Override public Object call(final M3<VI1, VI2, VI3> v) throws Throwable {
                 if (v != null)
                     return onFulfilled.call(v.v1, v.v2, v.v3);
                 else
@@ -360,7 +360,7 @@ public class Promises
     wf(final FR4<? super VI1, ? super VI2, ? super VI3, ? super VI4, ?> onFulfilled)
     {
         return new OnFulfilled<M4<VI1, VI2, VI3, VI4>>() {
-            @Override public final Object call(final M4<VI1, VI2, VI3, VI4> v) throws Throwable {
+            @Override public Object call(final M4<VI1, VI2, VI3, VI4> v) throws Throwable {
                 if (v != null)
                     return onFulfilled.call(v.v1, v.v2, v.v3, v.v4);
                 else
@@ -379,7 +379,7 @@ public class Promises
     wf(final FR5<? super VI1, ? super VI2, ? super VI3, ? super VI4, ? super VI5, ?> onFulfilled)
     {
         return new OnFulfilled<M5<VI1, VI2, VI3, VI4, VI5>>() {
-            @Override public final Object call(final M5<VI1, VI2, VI3, VI4, VI5> v) throws Throwable {
+            @Override public Object call(final M5<VI1, VI2, VI3, VI4, VI5> v) throws Throwable {
                 if (v != null)
                     return onFulfilled.call(v.v1, v.v2, v.v3, v.v4, v.v5);
                 else
@@ -397,7 +397,7 @@ public class Promises
     public static <RI1, RI2> OnRejected<M2<RI1, RI2>> wr(final FR3<? super RI1, ? super RI2, Throwable, ?> onRejected)
     {
         return new OnRejected<M2<RI1, RI2>>() {
-            @Override public final Object call(final M2<RI1, RI2> r, final Throwable e) throws Throwable {
+            @Override public Object call(final M2<RI1, RI2> r, final Throwable e) throws Throwable {
                 if (r != null)
                     return onRejected.call(r.v1, r.v2, e);
                 else
@@ -416,7 +416,7 @@ public class Promises
     wr(final FR4<? super RI1, ? super RI2, ? super RI3, Throwable, ?> onRejected)
     {
         return new OnRejected<M3<RI1, RI2, RI3>>() {
-            @Override public final Object call(final M3<RI1, RI2, RI3> r, final Throwable e) throws Throwable {
+            @Override public Object call(final M3<RI1, RI2, RI3> r, final Throwable e) throws Throwable {
                 if (r != null)
                     return onRejected.call(r.v1, r.v2, r.v3, e);
                 else
@@ -435,7 +435,7 @@ public class Promises
     wr(final FR5<? super RI1, ? super RI2, ? super RI3, ? super RI4, Throwable, ?> onRejected)
     {
         return new OnRejected<M4<RI1, RI2, RI3, RI4>>() {
-            @Override public final Object call(final M4<RI1, RI2, RI3, RI4> r, final Throwable e) throws Throwable {
+            @Override public Object call(final M4<RI1, RI2, RI3, RI4> r, final Throwable e) throws Throwable {
                 if (r != null)
                     return onRejected.call(r.v1, r.v2, r.v3, r.v4, e);
                 else
@@ -454,8 +454,7 @@ public class Promises
     wr(final FR6<? super RI1, ? super RI2, ? super RI3, ? super RI4, ? super RI5, Throwable, ?> onRejected)
     {
         return new OnRejected<M5<RI1, RI2, RI3, RI4, RI5>>() {
-            @Override public final Object
-            call(final M5<RI1, RI2, RI3, RI4, RI5> r, final Throwable e) throws Throwable {
+            @Override public Object call(final M5<RI1, RI2, RI3, RI4, RI5> r, final Throwable e) throws Throwable {
                 if (r != null)
                     return onRejected.call(r.v1, r.v2, r.v3, r.v4, r.v5, e);
                 else
@@ -478,7 +477,7 @@ public class Promises
     {
         return pf(null).then(
             exec,
-            new OnFulfilled<Object>() { @Override public final Object call(final Object dummy) throws Throwable {
+            new OnFulfilled<Object>() { @Override public Object call(final Object dummy) throws Throwable {
                 return onExec.call();
             }}
         );

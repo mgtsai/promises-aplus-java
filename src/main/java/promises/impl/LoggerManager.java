@@ -14,11 +14,11 @@ public final class LoggerManager
     private InternalExceptionHandler internalExceptionHandler = DEFAULT_INTERNAL_EXCEPTION_HANDLER;
     //-----------------------------------------------------------------------------------------------------------------
     private static InternalExceptionHandler DEFAULT_INTERNAL_EXCEPTION_HANDLER = new InternalExceptionHandler() {
-        @Override public final void onCreated(final InternalException exception) {
+        @Override public void onCreated(final InternalException exception) {
 
         }
 
-        @Override public final void onCaught(final InternalException exception) {
+        @Override public void onCaught(final InternalException exception) {
 
         }
     };

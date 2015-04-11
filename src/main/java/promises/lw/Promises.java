@@ -30,7 +30,7 @@ public class Promises
      */
     public static <V> RV<V> v(final V v)
     {
-        return new RV<V>() { @Override public final V value() {
+        return new RV<V>() { @Override public V value() {
             return v;
         }};
     }
@@ -188,7 +188,7 @@ public class Promises
     wf(final FR2<? super VI1, ? super VI2, ? extends RV<? extends VO>> onFulfilled)
     {
         return new OnFul<M2<VI1, VI2>, VO>() {
-            @Override public final RV<? extends VO> call(final M2<VI1, VI2> v) throws Throwable {
+            @Override public RV<? extends VO> call(final M2<VI1, VI2> v) throws Throwable {
                 if (v != null)
                     return onFulfilled.call(v.v1, v.v2);
                 else
@@ -207,7 +207,7 @@ public class Promises
     wf(final FR3<? super VI1, ? super VI2, ? super VI3, ? extends RV<? extends VO>> onFulfilled)
     {
         return new OnFul<M3<VI1, VI2, VI3>, VO>() {
-            @Override public final RV<? extends VO> call(final M3<VI1, VI2, VI3> v) throws Throwable {
+            @Override public RV<? extends VO> call(final M3<VI1, VI2, VI3> v) throws Throwable {
                 if (v != null)
                     return onFulfilled.call(v.v1, v.v2, v.v3);
                 else
@@ -226,7 +226,7 @@ public class Promises
     wf(final FR4<? super VI1, ? super VI2, ? super VI3, ? super VI4, ? extends RV<? extends VO>> onFulfilled)
     {
         return new OnFul<M4<VI1, VI2, VI3, VI4>, VO>() {
-            @Override public final RV<? extends VO> call(final M4<VI1, VI2, VI3, VI4> v) throws Throwable {
+            @Override public RV<? extends VO> call(final M4<VI1, VI2, VI3, VI4> v) throws Throwable {
                 if (v != null)
                     return onFulfilled.call(v.v1, v.v2, v.v3, v.v4);
                 else
@@ -248,7 +248,7 @@ public class Promises
         > onFulfilled
     ) {
         return new OnFul<M5<VI1, VI2, VI3, VI4, VI5>, VO>() {
-            @Override public final RV<? extends VO> call(final M5<VI1, VI2, VI3, VI4, VI5> v) throws Throwable {
+            @Override public RV<? extends VO> call(final M5<VI1, VI2, VI3, VI4, VI5> v) throws Throwable {
                 if (v != null)
                     return onFulfilled.call(v.v1, v.v2, v.v3, v.v4, v.v5);
                 else
@@ -271,7 +271,7 @@ public class Promises
     {
         return pf(null).then(
             exec,
-            new OnFul<Object, V>() { @Override public final RV<V> call(final Object dummy) throws Throwable {
+            new OnFul<Object, V>() { @Override public RV<V> call(final Object dummy) throws Throwable {
                 return v(onExec.call());
             }}
         );

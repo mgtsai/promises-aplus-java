@@ -4,18 +4,13 @@
 // found at http://www.apache.org/licenses/LICENSE-2.0
 //---------------------------------------------------------------------------------------------------------------------
 package promises.impl;
-import promises.impl.store.ResolveAction;
-import java.util.concurrent.Executor;
 //---------------------------------------------------------------------------------------------------------------------
-public abstract class BasePromiseImpl
+abstract class BasePromiseImpl
 {
     //-----------------------------------------------------------------------------------------------------------------
-    static Executor executor(final Executor exec)
-    {
-        return exec != null ? exec : ImplUtil.CURRENT_THREAD_EXECUTOR;
-    }
+    abstract String type();
     //-----------------------------------------------------------------------------------------------------------------
-    public abstract void applyResolveAction(final ResolveAction resAction);
+    abstract void applyResolveAction(final ResolveAction resAction);
     //-----------------------------------------------------------------------------------------------------------------
 }
 //---------------------------------------------------------------------------------------------------------------------

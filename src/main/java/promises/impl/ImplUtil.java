@@ -16,7 +16,7 @@ public final class ImplUtil
     //-----------------------------------------------------------------------------------------------------------------
     private static final CountDownLatch waitForever = new CountDownLatch(1);
     //-----------------------------------------------------------------------------------------------------------------
-    static Executor CURRENT_THREAD_EXECUTOR = new Executor() {
+    public static Executor CURRENT_THREAD_EXECUTOR = new Executor() {
         @Override public final void execute(@Nonnull final Runnable cmd) { cmd.run(); }
     };
     //-----------------------------------------------------------------------------------------------------------------
@@ -24,6 +24,11 @@ public final class ImplUtil
     public static <T> T cast(final Object obj)
     {
         return (T) obj;
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    static Executor executor(final Executor exec)
+    {
+        return exec != null ? exec : CURRENT_THREAD_EXECUTOR;
     }
     //-----------------------------------------------------------------------------------------------------------------
     static <V> V waitForever() throws InterruptedException

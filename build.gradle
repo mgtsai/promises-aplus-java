@@ -20,6 +20,8 @@ repositories {
 //---------------------------------------------------------------------------------------------------------------------
 dependencies {
     compile 'com.google.code.findbugs:jsr305:3.0.0'
+    testCompile 'org.jmockit:jmockit:1.16'
+    testCompile 'pl.pragmatists:JUnitParams:1.0.4'
     testCompile 'junit:junit:4.12'
 }
 //---------------------------------------------------------------------------------------------------------------------

@@ -5,16 +5,26 @@
 //---------------------------------------------------------------------------------------------------------------------
 package promises.impl;
 //---------------------------------------------------------------------------------------------------------------------
-public interface PromiseFactory<P>
+public final class PromiseTestData
 {
     //-----------------------------------------------------------------------------------------------------------------
-    public abstract P fulfilledPromise(final Object value);
+    static Object[][] fulfilled() {
+        return new Object[][] {
+            {null},
+            {123},
+            {"xyz"},
+            {true},
+        };
+    }
     //-----------------------------------------------------------------------------------------------------------------
-    public abstract P rejectedPromise(final Object reason, final Throwable exception);
-    //-----------------------------------------------------------------------------------------------------------------
-    public abstract P alwaysPendingPromise();
-    //-----------------------------------------------------------------------------------------------------------------
-    public abstract P mutablePromise(final PromiseStore store);
+    static Object[][] rejected() {
+        return new Object[][] {
+            {null,  null,                   null},
+            {123,   null,                   null},
+            {"xyz", new Exception(),        Exception.class},
+            {true,  new RuntimeException(), RuntimeException.class},
+        };
+    }
     //-----------------------------------------------------------------------------------------------------------------
 }
 //---------------------------------------------------------------------------------------------------------------------
