@@ -4,8 +4,6 @@
 // found at http://www.apache.org/licenses/LICENSE-2.0
 //---------------------------------------------------------------------------------------------------------------------
 package promises;
-import promises.lw.RV;
-import promises.typed.Resolution;
 import javax.annotation.Nonnull;
 import java.util.concurrent.Executor;
 //---------------------------------------------------------------------------------------------------------------------
@@ -42,26 +40,6 @@ public final class TestUtil
         } catch (final InterruptedException e) {
             //
         }
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    public static <V> RV<V> rv(final V value)
-    {
-        return new RV<V>() {
-            @Override public V value() { return value; }
-        };
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    public static <V, R> Resolution<V, R>
-    resolution(final String stateStr, final V value, final R reason, final Throwable exception)
-    {
-        final PromiseState state = PromiseState.valueOf(stateStr);
-
-        return new Resolution<V, R>() {
-            @Override public PromiseState state() { return state; }
-            @Override public V value() { return value; }
-            @Override public R reason() { return reason; }
-            @Override public Throwable exception() { return exception; }
-        };
     }
     //-----------------------------------------------------------------------------------------------------------------
 }

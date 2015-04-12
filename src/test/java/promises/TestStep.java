@@ -14,7 +14,7 @@ public final class TestStep
     private final CountDownLatch pause = new CountDownLatch(1);
     private final CountDownLatch finish = new CountDownLatch(1);
     //-----------------------------------------------------------------------------------------------------------------
-    public static <S, T> Return<S, T> noWait(final T ret)
+    public static <S, T> Return<S, T> retNoWait(final T ret)
     {
         return new Return<S, T>() {
             @Override public T call(final S self, final TestStep cbStep, final TestStep resStep) {
@@ -25,7 +25,7 @@ public final class TestStep
         };
     }
     //-----------------------------------------------------------------------------------------------------------------
-    public static <S, T> Return<S, T> throwException(final Throwable exception)
+    public static <S, T> Return<S, T> retThrowException(final Throwable exception)
     {
         return new Return<S, T>() {
             @Override public T
@@ -37,16 +37,18 @@ public final class TestStep
         };
     }
     //-----------------------------------------------------------------------------------------------------------------
-    public static <S, T> ReturnSupplier<S, T> suppIdentity()
+    public static <S, T> ReturnSupplier<S, T, T> suppIdentity()
     {
-        return new ReturnSupplier<S, T>() { @Override public Return<S, T> get(final Return<S, ?> retResolution) {
-            return new Return<S, T>() {
-                @Override public T
-                call(final S self, final TestStep cbStep, final TestStep resStep) throws Throwable {
-                    return ImplUtil.cast(retResolution.call(self, cbStep, resStep));
-                }
-            };
-        }};
+        return new ReturnSupplier<S, T, T>() {
+            @Override public Return<S, T> get(final Return<S, ? extends T> retResolution) {
+                return new Return<S, T>() {
+                    @Override public T
+                    call(final S self, final TestStep cbStep, final TestStep resStep) throws Throwable {
+                        return ImplUtil.cast(retResolution.call(self, cbStep, resStep));
+                    }
+                };
+            }
+        };
     }
     //-----------------------------------------------------------------------------------------------------------------
     public final TestStep pass()
@@ -85,9 +87,9 @@ public final class TestStep
         public abstract T call(final S self, final TestStep cbStep, final TestStep resStep) throws Throwable;
     }
     //-----------------------------------------------------------------------------------------------------------------
-    public interface ReturnSupplier<S, T>
+    public interface ReturnSupplier<S, TI, TO>
     {
-        public abstract Return<S, T> get(final Return<S, ?> retResolution);
+        public abstract Return<S, TO> get(final Return<S, ? extends TI> retResolution);
     }
     //-----------------------------------------------------------------------------------------------------------------
 }

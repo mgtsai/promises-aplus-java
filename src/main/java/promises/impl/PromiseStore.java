@@ -57,6 +57,23 @@ final class PromiseStore implements ResolveAction
         }
     }
     //-----------------------------------------------------------------------------------------------------------------
+    final synchronized <P> P createPromise(final PromiseFactory<P> factory)
+    {
+        if (isAlwaysPending)
+            return factory.alwaysPendingPromise();
+
+        switch (state) {
+        case FULFILLED:
+            return factory.fulfilledPromise(value);
+        case REJECTED:
+            return factory.rejectedPromise(reason, exception);
+        case PENDING:
+            return factory.mutablePromise(this);
+        default:
+            throw new InternalException("Unknown state %s", state);
+        }
+    }
+    //-----------------------------------------------------------------------------------------------------------------
     private void inSyncAddToPendingActionQ(final ResolveAction resAction)
     {
         if (pendingActionQ == null)

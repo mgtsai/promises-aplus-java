@@ -9,7 +9,6 @@ import promises.FR2;
 import promises.Promise;
 import promises.PromiseRejectedException;
 import promises.PromiseState;
-import promises.lw.P;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -32,11 +31,11 @@ public abstract class UntypedPromiseImpl extends BasePromiseImpl implements Prom
                     return ImplUtil.cast(value);
                 }
 
-                @Override public <V, R> promises.typed.Promise<V, R> toTypedPromise() {
+                @Override public <V, R> TypedPromiseImpl<V, R> toTypedPromise() {
                     return TypedPromiseImpl.<V, R>factory().fulfilledPromise(value);
                 }
 
-                @Override public <V> P<V> toLightWeightPromise() {
+                @Override public <V> LightWeightPromiseImpl<V> toLightWeightPromise() {
                     return LightWeightPromiseImpl.<V>factory().fulfilledPromise(value);
                 }
 
@@ -68,11 +67,11 @@ public abstract class UntypedPromiseImpl extends BasePromiseImpl implements Prom
                     throw new PromiseRejectedException(this, reason, exception);
                 }
 
-                @Override public <V, R> promises.typed.Promise<V, R> toTypedPromise() {
+                @Override public <V, R> TypedPromiseImpl<V, R> toTypedPromise() {
                     return TypedPromiseImpl.<V, R>factory().rejectedPromise(reason, exception);
                 }
 
-                @Override public <V> P<V> toLightWeightPromise() {
+                @Override public <V> LightWeightPromiseImpl<V> toLightWeightPromise() {
                     return LightWeightPromiseImpl.<V>factory().rejectedPromise(reason, exception);
                 }
 
@@ -103,11 +102,11 @@ public abstract class UntypedPromiseImpl extends BasePromiseImpl implements Prom
                     return ImplUtil.waitTimeout(timeout, unit);
                 }
 
-                @Override public <V, R> promises.typed.Promise<V, R> toTypedPromise() {
+                @Override public <V, R> TypedPromiseImpl<V, R> toTypedPromise() {
                     return TypedPromiseImpl.<V, R>factory().alwaysPendingPromise();
                 }
 
-                @Override public <V> P<V> toLightWeightPromise() {
+                @Override public <V> LightWeightPromiseImpl<V> toLightWeightPromise() {
                     return LightWeightPromiseImpl.<V>factory().alwaysPendingPromise();
                 }
 
@@ -140,12 +139,12 @@ public abstract class UntypedPromiseImpl extends BasePromiseImpl implements Prom
                     return ImplUtil.cast(store.await(this, timeout, unit));
                 }
 
-                @Override public <V, R> promises.typed.Promise<V, R> toTypedPromise() {
-                    return TypedPromiseImpl.<V, R>factory().mutablePromise(store);
+                @Override public <V, R> TypedPromiseImpl<V, R> toTypedPromise() {
+                    return store.createPromise(TypedPromiseImpl.<V, R>factory());
                 }
 
-                @Override public <V> P<V> toLightWeightPromise() {
-                    return LightWeightPromiseImpl.<V>factory().mutablePromise(store);
+                @Override public <V> LightWeightPromiseImpl<V> toLightWeightPromise() {
+                    return store.createPromise(LightWeightPromiseImpl.<V>factory());
                 }
 
                 @Override void applyResolveAction(final ResolveAction resAction) {
@@ -161,6 +160,12 @@ public abstract class UntypedPromiseImpl extends BasePromiseImpl implements Prom
             };
         }
     };
+    //-----------------------------------------------------------------------------------------------------------------
+    @Override
+    public abstract <V, R> TypedPromiseImpl<V, R> toTypedPromise();
+    //-----------------------------------------------------------------------------------------------------------------
+    @Override
+    public abstract <V> LightWeightPromiseImpl<V> toLightWeightPromise();
     //-----------------------------------------------------------------------------------------------------------------
     abstract <V, R> UntypedPromiseImpl
     doThen(final Executor exec, final FR1<V, ?> onFulfilled, final FR2<R, Throwable, ?> onRejected);
