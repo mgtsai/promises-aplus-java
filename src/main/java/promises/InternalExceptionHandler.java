@@ -16,14 +16,14 @@ public interface InternalExceptionHandler
      *
      * @param exception The newly created {@link InternalException}
      */
-    public abstract void onCreated(final InternalException exception);
+    void onCreated(final InternalException exception);
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * Invoked when an {@link InternalException} is caught by the promise callback handler.
      *
      * @param exception The caught {@link InternalException}
      */
-    public abstract void onCaught(final InternalException exception);
+    void onCaught(final InternalException exception);
     //-----------------------------------------------------------------------------------------------------------------
 }
 //---------------------------------------------------------------------------------------------------------------------

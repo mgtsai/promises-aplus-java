@@ -7,13 +7,15 @@ package promises.impl;
 import promises.InternalException;
 import promises.PromiseRejectedException;
 import promises.PromiseState;
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 //---------------------------------------------------------------------------------------------------------------------
-final class PromiseStore implements ResolveAction
+final class PromiseStore implements Executor, ResolveAction
 {
     //-----------------------------------------------------------------------------------------------------------------
     private final CountDownLatch waitUntilResolved = new CountDownLatch(1);
@@ -22,7 +24,8 @@ final class PromiseStore implements ResolveAction
     Object value = null;
     Object reason = null;
     Throwable exception = null;
-    private ArrayList<ResolveAction> pendingActionQ = null;
+    private LinkedList<ResolveAction> pendingActionQ = null;
+    private ArrayList<Runnable> blockingCommandQ = null;
     //-----------------------------------------------------------------------------------------------------------------
     final Object await(final Object promise) throws InterruptedException, PromiseRejectedException
     {
@@ -63,12 +66,12 @@ final class PromiseStore implements ResolveAction
             return factory.alwaysPendingPromise();
 
         switch (state) {
+        case PENDING:
+            return factory.mutablePromise(this);
         case FULFILLED:
             return factory.fulfilledPromise(value);
         case REJECTED:
             return factory.rejectedPromise(reason, exception);
-        case PENDING:
-            return factory.mutablePromise(this);
         default:
             throw new InternalException("Unknown state %s", state);
         }
@@ -77,9 +80,36 @@ final class PromiseStore implements ResolveAction
     private void inSyncAddToPendingActionQ(final ResolveAction resAction)
     {
         if (pendingActionQ == null)
-            pendingActionQ = new ArrayList<ResolveAction>();
+            pendingActionQ = new LinkedList<ResolveAction>();
 
-        pendingActionQ.add(resAction);
+        pendingActionQ.addLast(resAction);
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    final <VCI, RCI, PO> PO inSyncNewMutablePromise(
+        final PromiseFactory<PO> factory,
+        final Executor exec,
+        final FulfilledResolver<VCI, ?> fulResolver,
+        final VCI onFulfilled,
+        final int onFulStackDiff,
+        final RejectedResolver<?, RCI> rejResolver,
+        final RCI onRejected,
+        final int onRejStackDiff
+    ) {
+        final PromiseStore chainDstStore = new PromiseStore();
+
+        inSyncAddToPendingActionQ(new ResolveAction() {
+            @Override public void setAlwaysPending() { chainDstStore.setAlwaysPending(); }
+
+            @Override public void setFulfilled(final Object value) {
+                fulResolver.execAndResolve(PromiseStore.this, exec, onFulfilled, onFulStackDiff, chainDstStore);
+            }
+
+            @Override public void setRejected(final Object reason, final Throwable exception) {
+                rejResolver.execAndResolve(PromiseStore.this, exec, onRejected, onRejStackDiff, chainDstStore);
+            }
+        });
+
+        return factory.mutablePromise(chainDstStore);
     }
     //-----------------------------------------------------------------------------------------------------------------
     final void applyResolveAction(final ResolveAction resAction)
@@ -109,42 +139,92 @@ final class PromiseStore implements ResolveAction
     final <VCI, RCI, PO> PO doThen(
         final PromiseFactory<PO> factory,
         final Executor exec,
-        final FulfilledResolver<VCI> fulResolver,
+        final FulfilledResolver<VCI, RCI> fulResolver,
         final VCI onFulfilled,
         final int onFulStackDiff,
-        final RejectedResolver<RCI> rejResolver,
+        final RejectedResolver<VCI, RCI> rejResolver,
         final RCI onRejected,
         final int onRejStackDiff
     ) {
+        final BaseResolver<VCI, RCI> resolver;
+
         synchronized (this) {
-            if (!isAlwaysPending && state == PromiseState.PENDING) {
-                final PromiseStore chainDstStore = new PromiseStore();
+            if (isAlwaysPending)
+                return factory.alwaysPendingPromise();
 
-                inSyncAddToPendingActionQ(new ResolveAction() {
-                    @Override public void setAlwaysPending() { chainDstStore.setAlwaysPending(); }
+            switch (state) {
+            case PENDING:
+                return inSyncNewMutablePromise(
+                    factory, exec,
+                    fulResolver, onFulfilled, onFulStackDiff,
+                    rejResolver, onRejected, onRejStackDiff
+                );
 
-                    @Override public void setFulfilled(final Object value) {
-                        fulResolver.execAndResolve(exec, onFulfilled, onFulStackDiff, value, chainDstStore);
-                    }
+            case FULFILLED:
+                if (pendingActionQ != null) {
+                    final PO promise = fulResolver.inSyncNonBlockingChainDstPromise(
+                        this, factory, exec,
+                        onFulfilled, onFulStackDiff
+                    );
 
-                    @Override public void setRejected(final Object reason, final Throwable exception) {
-                        rejResolver.resolve(exec, onRejected, onRejStackDiff, reason, exception, chainDstStore);
-                    }
-                });
+                    if (promise != null)
+                        return promise;
+                }
 
-                return factory.mutablePromise(chainDstStore);
+                resolver = fulResolver;
+                break;
+
+            case REJECTED:
+                if (pendingActionQ != null) {
+                    final PO promise = rejResolver.inSyncNonBlockingChainDstPromise(
+                        this, factory, exec,
+                        onRejected, onRejStackDiff
+                    );
+
+                    if (promise != null)
+                        return promise;
+                }
+
+                resolver = rejResolver;
+                break;
+
+            default:
+                throw new InternalException("Unknown state %s", state);
             }
         }
 
-        switch (state) {
-        case PENDING:
-            return factory.alwaysPendingPromise();
-        case FULFILLED:
-            return fulResolver.chainDstPromise(factory, exec, onFulfilled, onFulStackDiff, value);
-        case REJECTED:
-            return rejResolver.chainDstPromise(factory, exec, onRejected, onRejStackDiff, reason, exception);
-        default:
-            throw new InternalException("Unknown state %s", state);
+        return resolver.delayedChainDstPromise(
+            this, factory, exec,
+            onFulfilled, onFulStackDiff,
+            onRejected, onRejStackDiff
+        );
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    @Override
+    public final void execute(@Nonnull final Runnable command)
+    {
+        if (blockingCommandQ == null)
+            blockingCommandQ = new ArrayList<Runnable>();
+
+        blockingCommandQ.add(command);
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    private synchronized ResolveAction nextPendingAction()
+    {
+        if (!pendingActionQ.isEmpty())
+            return pendingActionQ.removeFirst();
+        else {
+            pendingActionQ = null;
+            return null;
+        }
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    private void runBlockingCommands()
+    {
+        if (blockingCommandQ != null) {
+            for (final Runnable command : blockingCommandQ)
+                command.run();
+            blockingCommandQ = null;
         }
     }
     //-----------------------------------------------------------------------------------------------------------------
@@ -170,6 +250,8 @@ final class PromiseStore implements ResolveAction
     @Override
     public final void setFulfilled(final Object value)
     {
+        ResolveAction action;
+
         synchronized (this) {
             if (isAlwaysPending)
                 throw new InternalException("Unexpected fulfilling this always-pending promise");
@@ -178,20 +260,28 @@ final class PromiseStore implements ResolveAction
 
             this.state = PromiseState.FULFILLED;
             this.value = value;
+
+            waitUntilResolved.countDown();
+
+            if (pendingActionQ == null)
+                return;
+
+            action = pendingActionQ.removeFirst();
         }
 
-        waitUntilResolved.countDown();
+        do {
+            action.setFulfilled(value);
+            action = nextPendingAction();
+        } while (action != null);
 
-        if (pendingActionQ != null) {
-            for (final ResolveAction action : pendingActionQ)
-                action.setFulfilled(value);
-            pendingActionQ = null;
-        }
+        runBlockingCommands();
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
     public final void setRejected(final Object reason, final Throwable exception)
     {
+        ResolveAction action;
+
         synchronized (this) {
             if (isAlwaysPending)
                 throw new InternalException("Unexpected rejecting this always-pending promise");
@@ -201,15 +291,21 @@ final class PromiseStore implements ResolveAction
             this.state = PromiseState.REJECTED;
             this.reason = reason;
             this.exception = exception;
+
+            waitUntilResolved.countDown();
+
+            if (pendingActionQ == null)
+                return;
+
+            action = pendingActionQ.removeFirst();
         }
 
-        waitUntilResolved.countDown();
+        do {
+            action.setRejected(reason, exception);
+            action = nextPendingAction();
+        } while (action != null);
 
-        if (pendingActionQ != null) {
-            for (final ResolveAction action : pendingActionQ)
-                action.setRejected(reason, exception);
-            pendingActionQ = null;
-        }
+        runBlockingCommands();
     }
     //-----------------------------------------------------------------------------------------------------------------
 }

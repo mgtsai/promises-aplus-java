@@ -5,9 +5,7 @@
 //---------------------------------------------------------------------------------------------------------------------
 package promises.impl;
 import promises.InternalException;
-import javax.annotation.Nonnull;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 //---------------------------------------------------------------------------------------------------------------------
@@ -16,19 +14,10 @@ public final class ImplUtil
     //-----------------------------------------------------------------------------------------------------------------
     private static final CountDownLatch waitForever = new CountDownLatch(1);
     //-----------------------------------------------------------------------------------------------------------------
-    public static Executor CURRENT_THREAD_EXECUTOR = new Executor() {
-        @Override public final void execute(@Nonnull final Runnable cmd) { cmd.run(); }
-    };
-    //-----------------------------------------------------------------------------------------------------------------
     @SuppressWarnings("unchecked")
     public static <T> T cast(final Object obj)
     {
         return (T) obj;
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    static Executor executor(final Executor exec)
-    {
-        return exec != null ? exec : CURRENT_THREAD_EXECUTOR;
     }
     //-----------------------------------------------------------------------------------------------------------------
     static <V> V waitForever() throws InterruptedException

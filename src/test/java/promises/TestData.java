@@ -8,6 +8,16 @@ package promises;
 public final class TestData
 {
     //-----------------------------------------------------------------------------------------------------------------
+    public static Object[][] rows(final Object[][] paramsList, final int... indexes)
+    {
+        final Object[][] rowsParamsList = new Object[indexes.length][];
+
+        for (int i = 0; i < indexes.length; ++i)
+            rowsParamsList[i] = paramsList[indexes[i]];
+
+        return rowsParamsList;
+    }
+    //-----------------------------------------------------------------------------------------------------------------
     public static Object[][] union(final Object[][]... paramsLists)
     {
         int cnt = 0;

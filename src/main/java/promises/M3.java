@@ -20,7 +20,12 @@ public final class M3<T1, T2, T3> implements Serializable
     public final T2 v2;
     public final T3 v3;
     //-----------------------------------------------------------------------------------------------------------------
-    public M3(final T1 v1, final T2 v2, final T3 v3)
+    public static <T1, T2, T3> M3<T1, T2, T3> of(final T1 v1, final T2 v2, final T3 v3)
+    {
+        return new M3<T1, T2, T3>(v1, v2, v3);
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    private M3(final T1 v1, final T2 v2, final T3 v3)
     {
         this.v1 = v1;
         this.v2 = v2;

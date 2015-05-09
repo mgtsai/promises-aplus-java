@@ -4,6 +4,9 @@
 // found at http://www.apache.org/licenses/LICENSE-2.0
 //---------------------------------------------------------------------------------------------------------------------
 package promises;
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
 import javax.annotation.Nonnull;
 import java.util.concurrent.Executor;
 //---------------------------------------------------------------------------------------------------------------------
@@ -28,9 +31,20 @@ public final class TestUtil
             return obj == null;
     }
     //-----------------------------------------------------------------------------------------------------------------
-    public static Class<?> exceptionClass(final Throwable exception)
+    public static <T> Matcher<T> ofClass(final Class<?> expectedClass)
     {
-        return exception != null ? exception.getClass() : null;
+        return new BaseMatcher<T>() {
+            @Override public boolean matches(final Object item) {
+                if (expectedClass != null)
+                    return item != null && item.getClass() == expectedClass;
+                else
+                    return item == null;
+            }
+
+            @Override public void describeTo(final Description desc) {
+                desc.appendText("of class ").appendValue(expectedClass);
+            }
+        };
     }
     //-----------------------------------------------------------------------------------------------------------------
     public static void sleep(final long millis)

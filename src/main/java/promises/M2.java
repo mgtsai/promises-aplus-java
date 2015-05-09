@@ -18,7 +18,12 @@ public final class M2<T1, T2> implements Serializable
     public final T1 v1;
     public final T2 v2;
     //-----------------------------------------------------------------------------------------------------------------
-    public M2(final T1 v1, final T2 v2)
+    public static <T1, T2> M2<T1, T2> of(final T1 v1, final T2 v2)
+    {
+        return new M2<T1, T2>(v1, v2);
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    private M2(final T1 v1, final T2 v2)
     {
         this.v1 = v1;
         this.v2 = v2;

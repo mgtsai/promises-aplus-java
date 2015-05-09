@@ -49,7 +49,7 @@ public class Promises
      */
     public static <V1, V2, R> Resolution<M2<V1, V2>, R> v(final V1 v1, final V2 v2)
     {
-        return v(new M2<V1, V2>(v1, v2));
+        return v(M2.of(v1, v2));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -62,7 +62,7 @@ public class Promises
      */
     public static <V1, V2, V3, R> Resolution<M3<V1, V2, V3>, R> v(final V1 v1, final V2 v2, final V3 v3)
     {
-        return v(new M3<V1, V2, V3>(v1, v2, v3));
+        return v(M3.of(v1, v2, v3));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -77,7 +77,7 @@ public class Promises
     public static <V1, V2, V3, V4, R> Resolution<M4<V1, V2, V3, V4>, R>
     v(final V1 v1, final V2 v2, final V3 v3, final V4 v4)
     {
-        return v(new M4<V1, V2, V3, V4>(v1, v2, v3, v4));
+        return v(M4.of(v1, v2, v3, v4));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -93,7 +93,7 @@ public class Promises
     public static <V1, V2, V3, V4, V5, R> Resolution<M5<V1, V2, V3, V4, V5>, R>
     v(final V1 v1, final V2 v2, final V3 v3, final V4 v4, final V5 v5)
     {
-        return v(new M5<V1, V2, V3, V4, V5>(v1, v2, v3, v4, v5));
+        return v(M5.of(v1, v2, v3, v4, v5));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -123,7 +123,7 @@ public class Promises
      */
     public static <V, R1, R2> Resolution<V, M2<R1, R2>> r(final R1 r1, final R2 r2, final Throwable e)
     {
-        return r(new M2<R1, R2>(r1, r2), e);
+        return r(M2.of(r1, r2), e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -138,7 +138,7 @@ public class Promises
     public static <V, R1, R2, R3> Resolution<V, M3<R1, R2, R3>>
     r(final R1 r1, final R2 r2, final R3 r3, final Throwable e)
     {
-        return r(new M3<R1, R2, R3>(r1, r2, r3), e);
+        return r(M3.of(r1, r2, r3), e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -154,7 +154,7 @@ public class Promises
     public static <V, R1, R2, R3, R4> Resolution<V, M4<R1, R2, R3, R4>>
     r(final R1 r1, final R2 r2, final R3 r3, final R4 r4, final Throwable e)
     {
-        return r(new M4<R1, R2, R3, R4>(r1, r2, r3, r4), e);
+        return r(M4.of(r1, r2, r3, r4), e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -171,7 +171,7 @@ public class Promises
     public static <V, R1, R2, R3, R4, R5> Resolution<V, M5<R1, R2, R3, R4, R5>>
     r(final R1 r1, final R2 r2, final R3 r3, final R4 r4, final R5 r5, final Throwable e)
     {
-        return r(new M5<R1, R2, R3, R4, R5>(r1, r2, r3, r4, r5), e);
+        return r(M5.of(r1, r2, r3, r4, r5), e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -204,7 +204,7 @@ public class Promises
      */
     public static <V1, V2, R> Promise<M2<V1, V2>, R> pf(final V1 v1, final V2 v2)
     {
-        return pf(new M2<V1, V2>(v1, v2));
+        return pf(M2.of(v1, v2));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -217,7 +217,7 @@ public class Promises
      */
     public static <V1, V2, V3, R> Promise<M3<V1, V2, V3>, R> pf(final V1 v1, final V2 v2, final V3 v3)
     {
-        return pf(new M3<V1, V2, V3>(v1, v2, v3));
+        return pf(M3.of(v1, v2, v3));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -232,7 +232,7 @@ public class Promises
     public static <V1, V2, V3, V4, R> Promise<M4<V1, V2, V3, V4>, R>
     pf(final V1 v1, final V2 v2, final V3 v3, final V4 v4)
     {
-        return pf(new M4<V1, V2, V3, V4>(v1, v2, v3, v4));
+        return pf(M4.of(v1, v2, v3, v4));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -248,7 +248,7 @@ public class Promises
     public static <V1, V2, V3, V4, V5, R> Promise<M5<V1, V2, V3, V4, V5>, R>
     pf(final V1 v1, final V2 v2, final V3 v3, final V4 v4, final V5 v5)
     {
-        return pf(new M5<V1, V2, V3, V4, V5>(v1, v2, v3, v4, v5));
+        return pf(M5.of(v1, v2, v3, v4, v5));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -273,7 +273,7 @@ public class Promises
      */
     public static <V, R1, R2> Promise<V, M2<R1, R2>> pr(final R1 r1, final R2 r2, final Throwable e)
     {
-        return pr(new M2<R1, R2>(r1, r2), e);
+        return pr(M2.of(r1, r2), e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -288,7 +288,7 @@ public class Promises
     public static <V, R1, R2, R3> Promise<V, M3<R1, R2, R3>>
     pr(final R1 r1, final R2 r2, final R3 r3, final Throwable e)
     {
-        return pr(new M3<R1, R2, R3>(r1, r2, r3), e);
+        return pr(M3.of(r1, r2, r3), e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -304,7 +304,7 @@ public class Promises
     public static <V, R1, R2, R3, R4> Promise<V, M4<R1, R2, R3, R4>>
     pr(final R1 r1, final R2 r2, final R3 r3, final R4 r4, final Throwable e)
     {
-        return pr(new M4<R1, R2, R3, R4>(r1, r2, r3, r4), e);
+        return pr(M4.of(r1, r2, r3, r4), e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -321,7 +321,7 @@ public class Promises
     public static <V, R1, R2, R3, R4, R5> Promise<V, M5<R1, R2, R3, R4, R5>>
     pr(final R1 r1, final R2 r2, final R3 r3, final R4 r4, final R5 r5, final Throwable e)
     {
-        return pr(new M5<R1, R2, R3, R4, R5>(r1, r2, r3, r4, r5), e);
+        return pr(M5.of(r1, r2, r3, r4, r5), e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -344,7 +344,7 @@ public class Promises
      */
     public static <V, R1, R2> Promise<V, M2<R1, R2>> pr(final R1 r1, final R2 r2)
     {
-        return pr(new M2<R1, R2>(r1, r2), null);
+        return pr(M2.of(r1, r2), null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -357,7 +357,7 @@ public class Promises
      */
     public static <V, R1, R2, R3> Promise<V, M3<R1, R2, R3>> pr(final R1 r1, final R2 r2, final R3 r3)
     {
-        return pr(new M3<R1, R2, R3>(r1, r2, r3), null);
+        return pr(M3.of(r1, r2, r3), null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -372,7 +372,7 @@ public class Promises
     public static <V, R1, R2, R3, R4> Promise<V, M4<R1, R2, R3, R4>>
     pr(final R1 r1, final R2 r2, final R3 r3, final R4 r4)
     {
-        return pr(new M4<R1, R2, R3, R4>(r1, r2, r3, r4), null);
+        return pr(M4.of(r1, r2, r3, r4), null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -388,7 +388,7 @@ public class Promises
     public static <V, R1, R2, R3, R4, R5> Promise<V, M5<R1, R2, R3, R4, R5>>
     pr(final R1 r1, final R2 r2, final R3 r3, final R4 r4, final R5 r5)
     {
-        return pr(new M5<R1, R2, R3, R4, R5>(r1, r2, r3, r4, r5), null);
+        return pr(M5.of(r1, r2, r3, r4, r5), null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**

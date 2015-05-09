@@ -16,7 +16,7 @@ public interface ResolvePromise
      *
      * @param v The value which the target promise would be resolved with
      */
-    public abstract void resolve(final Object v);
+    void resolve(final Object v);
     //-----------------------------------------------------------------------------------------------------------------
 }
 //---------------------------------------------------------------------------------------------------------------------

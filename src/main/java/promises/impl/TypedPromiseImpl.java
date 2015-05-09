@@ -17,8 +17,41 @@ import java.util.concurrent.TimeoutException;
 public abstract class TypedPromiseImpl<V, R> extends BasePromiseImpl implements Promise<V, R>
 {
     //-----------------------------------------------------------------------------------------------------------------
+    private static final TypedPromiseImpl<Object, Object> originPromise = new TypedPromiseImpl<Object, Object>() {
+        @Override String type() { return "TYPED-ORIGIN"; }
+        @Override public PromiseState state() { return PromiseState.FULFILLED; }
+        @Override public Object value() { return null; }
+        @Override public Object reason() { return null; }
+        @Override public Throwable exception() { return null; }
+        @Override public Object await() { return null; }
+        @Override public Object await(final long timeout, final TimeUnit unit) { return null; }
+
+        @Override public UntypedPromiseImpl toUntypedPromise() {
+            return UntypedPromiseImpl.factory.originPromise();
+        }
+
+        @Override public LightWeightPromiseImpl<Object> toLightWeightPromise() {
+            return LightWeightPromiseImpl.factory().originPromise();
+        }
+
+        @Override void applyResolveAction(final ResolveAction resAction) {
+            resAction.setFulfilled(null);
+        }
+
+        @Override <VO, RO> TypedPromiseImpl<VO, RO> doThen(
+            final Executor exec,
+            final FR1<? super Object, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled,
+            final FR2<? super Object, Throwable, ? extends Resolution<? extends VO, ? extends RO>> onRejected
+        ) {
+            return FulfilledResolver.of(exec, onFulfilled)
+                .chainDstPromise(TypedPromiseImpl.<VO, RO>factory(), exec, onFulfilled, 0, null);
+        }
+    };
+    //-----------------------------------------------------------------------------------------------------------------
     private static final PromiseFactory<TypedPromiseImpl<Object, Object>>
     factorySingleton = new PromiseFactory<TypedPromiseImpl<Object, Object>>() {
+        @Override public TypedPromiseImpl<Object, Object> originPromise() { return originPromise; }
+
         @Override public TypedPromiseImpl<Object, Object> fulfilledPromise(final Object value) {
             return new TypedPromiseImpl<Object, Object>() {
                 @Override String type() { return "TYPED-FULFILLED"; }
@@ -46,7 +79,7 @@ public abstract class TypedPromiseImpl<V, R> extends BasePromiseImpl implements 
                     final FR1<? super Object, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled,
                     final FR2<? super Object, Throwable, ? extends Resolution<? extends VO, ? extends RO>> onRejected
                 ) {
-                    return FulfilledResolver.of(onFulfilled)
+                    return FulfilledResolver.of(exec, onFulfilled)
                         .chainDstPromise(TypedPromiseImpl.<VO, RO>factory(), exec, onFulfilled, 0, value);
                 }
             };
@@ -87,7 +120,7 @@ public abstract class TypedPromiseImpl<V, R> extends BasePromiseImpl implements 
                     final FR1<? super Object, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled,
                     final FR2<? super Object, Throwable, ? extends Resolution<? extends VO, ? extends RO>> onRejected
                 ) {
-                    return RejectedResolver.of(onRejected)
+                    return RejectedResolver.of(exec, onRejected)
                         .chainDstPromise(TypedPromiseImpl.<VO, RO>factory(), exec, onRejected, 0, reason, exception);
                 }
             };
@@ -166,8 +199,10 @@ public abstract class TypedPromiseImpl<V, R> extends BasePromiseImpl implements 
                 ) {
                     return store.doThen(
                         TypedPromiseImpl.<VO, RO>factory(), exec,
-                        FulfilledResolver.of(onFulfilled), onFulfilled, 0,
-                        RejectedResolver.of(onRejected), onRejected, 0
+                        FulfilledResolver.<Object, FR2<? super Object, Throwable, ?>>of(exec, onFulfilled),
+                        onFulfilled, 0,
+                        RejectedResolver.<FR1<? super Object, ?>, Object>of(exec, onRejected),
+                        onRejected, 0
                     );
                 }
             };
@@ -197,14 +232,14 @@ public abstract class TypedPromiseImpl<V, R> extends BasePromiseImpl implements 
         final FR1<? super V, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled,
         final FR2<? super R, Throwable, ? extends Resolution<? extends VO, ? extends RO>> onRejected
     ) {
-        return doThen(ImplUtil.executor(exec), onFulfilled, onRejected);
+        return doThen(exec, onFulfilled, onRejected);
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
     public final <VO, RO> Promise<VO, RO>
     then(final Executor exec, final FR1<? super V, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled)
     {
-        return doThen(ImplUtil.executor(exec), onFulfilled, null);
+        return doThen(exec, onFulfilled, null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
@@ -212,14 +247,14 @@ public abstract class TypedPromiseImpl<V, R> extends BasePromiseImpl implements 
         final FR1<? super V, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled,
         final FR2<? super R, Throwable, ? extends Resolution<? extends VO, ? extends RO>> onRejected
     ) {
-        return doThen(ImplUtil.CURRENT_THREAD_EXECUTOR, onFulfilled, onRejected);
+        return doThen(null, onFulfilled, onRejected);
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
     public final <VO, RO> Promise<VO, RO>
     then(final FR1<? super V, ? extends Resolution<? extends VO, ? extends RO>> onFulfilled)
     {
-        return doThen(ImplUtil.CURRENT_THREAD_EXECUTOR, onFulfilled, null);
+        return doThen(null, onFulfilled, null);
     }
     //-----------------------------------------------------------------------------------------------------------------
 }

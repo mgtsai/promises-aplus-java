@@ -28,7 +28,7 @@ Implementation of Promises/A+ in Java, plus various language sugars for programm
 
 ### Using Untyped Interface Set
 ```java
-import promises.Promises.pf;
+import static promises.Promises.pf;
 ...
 pf(null)                        // Returns fulfilled promises.Promise with null value
 .then(dummy -> {
@@ -52,8 +52,8 @@ pf(null)                        // Returns fulfilled promises.Promise with null 
 
 ### Using Typed Interface Set
 ```java
-import promises.typed.Promises.pf;
-import promises.typed.Promises.v;
+import static promises.typed.Promises.pf;
+import static promises.typed.Promises.v;
 ...
 pf(null)                        // Returns fulfilled promises.typed.Promise<Object, Object> with null value
 .then(dummy -> {
@@ -80,8 +80,8 @@ For simplicity, light-weight promise objects do not contain rejection reasons (o
 avoid specifying reason type parameter.
 
 ```java
-import promises.lw.Promises.pf;
-import promises.lw.Promises.v;
+import static promises.lw.Promises.pf;
+import static promises.lw.Promises.v;
 ...
 pf(null)                        // Returns fulfilled promises.lw.P<Object> with null value
 .then(dummy -> {
@@ -105,11 +105,11 @@ pf(null)                        // Returns fulfilled promises.lw.P<Object> with 
 
 ### Multi-argument callbacks
 ```java
-import promises.typed.Promises.pf;
-import promises.typed.Promises.r;
-import promises.typed.Promises.v;
-import promises.typed.Promises.wf;
-import promises.typed.Promises.wr;
+import static promises.typed.Promises.pf;
+import static promises.typed.Promises.r;
+import static promises.typed.Promises.v;
+import static promises.typed.Promises.wf;
+import static promises.typed.Promises.wr;
 ...
 pf(null)
 .then(dummy -> {
@@ -131,7 +131,7 @@ pf(null)
 
 ### Waits for promises being resolved (fulfilled or rejected)
 ```java
-import promises.typed.Promises.pf;
+import static promises.typed.Promises.pf;
 ...
 pf(null)
 .then(...)
@@ -147,12 +147,12 @@ pf(null)
 ### Executes a synchronous method (i.e. JDBC operations) on an Executor (Thread)
 
 ```java
-import promises.typed.Promises.async;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import static promises.typed.Promises.async;
+import static java.sql.Connection;
+import static java.sql.PreparedStatement;
+import static java.sql.ResultSet;
+import static java.util.concurrent.Executor;
+import static java.util.concurrent.Executors;
 ...
 Executor exec = Executors.newSingleThreadExecutor(thread);
 

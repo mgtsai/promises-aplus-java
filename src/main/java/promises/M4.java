@@ -22,7 +22,12 @@ public final class M4<T1, T2, T3, T4> implements Serializable
     public final T3 v3;
     public final T4 v4;
     //-----------------------------------------------------------------------------------------------------------------
-    public M4(final T1 v1, final T2 v2, final T3 v3, final T4 v4)
+    public static <T1, T2, T3, T4> M4<T1, T2, T3, T4> of(final T1 v1, final T2 v2, final T3 v3, final T4 v4)
+    {
+        return new M4<T1, T2, T3, T4>(v1, v2, v3, v4);
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    private M4(final T1 v1, final T2 v2, final T3 v3, final T4 v4)
     {
         this.v1 = v1;
         this.v2 = v2;

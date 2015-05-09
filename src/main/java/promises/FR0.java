@@ -19,7 +19,7 @@ public interface FR0<R>
      * @return The returned value
      * @throws Throwable The throwable thrown by this execution
      */
-    public abstract R call() throws Throwable;
+    R call() throws Throwable;
     //-----------------------------------------------------------------------------------------------------------------
 }
 //---------------------------------------------------------------------------------------------------------------------

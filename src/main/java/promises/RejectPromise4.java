@@ -20,8 +20,7 @@ public interface RejectPromise4
      * @param r4 The 4th reason which the target promise would be rejected with
      * @param e The exception which the target promise would be rejected with
      */
-    public abstract void
-    reject(final Object r1, final Object object, final Object r3, final Object r4, final Throwable e);
+    void reject(final Object r1, final Object object, final Object r3, final Object r4, final Throwable e);
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * Rejects the target promise.
@@ -31,14 +30,14 @@ public interface RejectPromise4
      * @param r3 The 3rd reason which the target promise would be rejected with
      * @param r4 The 4th reason which the target promise would be rejected with
      */
-    public abstract void reject(final Object r1, final Object object, final Object r3, final Object r4);
+    void reject(final Object r1, final Object object, final Object r3, final Object r4);
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * Rejects the target promise.
      *
      * @param e The exception which the target promise would be rejected with
      */
-    public abstract void reject(final Throwable e);
+    void reject(final Throwable e);
     //-----------------------------------------------------------------------------------------------------------------
 }
 //---------------------------------------------------------------------------------------------------------------------

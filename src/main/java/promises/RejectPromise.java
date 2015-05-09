@@ -17,21 +17,21 @@ public interface RejectPromise
      * @param r The reason which the target promise would be rejected with
      * @param e The exception which the target promise would be rejected with
      */
-    public abstract void reject(final Object r, final Throwable e);
+    void reject(final Object r, final Throwable e);
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * Rejects the target promise.
      *
      * @param r The reason which the target promise would be rejected with
      */
-    public abstract void reject(final Object r);
+    void reject(final Object r);
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * Rejects the target promise.
      *
      * @param e The exception which the target promise would be rejected with
      */
-    public abstract void reject(final Throwable e);
+    void reject(final Throwable e);
     //-----------------------------------------------------------------------------------------------------------------
 }
 //---------------------------------------------------------------------------------------------------------------------

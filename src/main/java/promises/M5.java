@@ -24,7 +24,13 @@ public final class M5<T1, T2, T3, T4, T5> implements Serializable
     public final T4 v4;
     public final T5 v5;
     //-----------------------------------------------------------------------------------------------------------------
-    public M5(final T1 v1, final T2 v2, final T3 v3, final T4 v4, final T5 v5)
+    public static <T1, T2, T3, T4, T5> M5<T1, T2, T3, T4, T5>
+    of(final T1 v1, final T2 v2, final T3 v3, final T4 v4, final T5 v5)
+    {
+        return new M5<T1, T2, T3, T4, T5>(v1, v2, v3, v4, v5);
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    private M5(final T1 v1, final T2 v2, final T3 v3, final T4 v4, final T5 v5)
     {
         this.v1 = v1;
         this.v2 = v2;

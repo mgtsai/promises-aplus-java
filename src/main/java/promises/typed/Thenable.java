@@ -34,7 +34,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
             }
 
             @Override public void resolve(final V1 v1, final V2 v2) {
-                resP.resolve(new M2<V1, V2>(v1, v2));
+                resP.resolve(M2.of(v1, v2));
             }
         };
     }
@@ -53,7 +53,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
             }
 
             @Override public void resolve(final V1 v1, final V2 v2, final V3 v3) {
-                resP.resolve(new M3<V1, V2, V3>(v1, v2, v3));
+                resP.resolve(M3.of(v1, v2, v3));
             }
         };
     }
@@ -72,7 +72,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
             }
 
             @Override public void resolve(final V1 v1, final V2 v2, final V3 v3, final V4 v4) {
-                resP.resolve(new M4<V1, V2, V3, V4>(v1, v2, v3, v4));
+                resP.resolve(M4.of(v1, v2, v3, v4));
             }
         };
     }
@@ -92,7 +92,7 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
             }
 
             @Override public void resolve(final V1 v1, final V2 v2, final V3 v3, final V4 v4, final V5 v5) {
-                resP.resolve(new M5<V1, V2, V3, V4, V5>(v1, v2, v3, v4, v5));
+                resP.resolve(M5.of(v1, v2, v3, v4, v5));
             }
         };
     }
@@ -102,16 +102,14 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
     {
         return new RejectPromise2<R1, R2>() {
             @Override public void reject(final R1 r1, final R2 r2, final Throwable e) {
-                rejP.reject(new M2<R1, R2>(r1, r2), e);
+                rejP.reject(M2.of(r1, r2), e);
             }
 
             @Override public void reject(final R1 r1, final R2 r2) {
-                rejP.reject(new M2<R1, R2>(r1, r2));
+                rejP.reject(M2.of(r1, r2));
             }
 
-            @Override public void reject(final Throwable e) {
-                rejP.reject(e);
-            }
+            @Override public void reject(final Throwable e) { rejP.reject(e); }
         };
     }
     //-----------------------------------------------------------------------------------------------------------------
@@ -120,16 +118,14 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
     {
         return new RejectPromise3<R1, R2, R3>() {
             @Override public void reject(final R1 r1, final R2 r2, final R3 r3, final Throwable e) {
-                rejP.reject(new M3<R1, R2, R3>(r1, r2, r3), e);
+                rejP.reject(M3.of(r1, r2, r3), e);
             }
 
             @Override public void reject(final R1 r1, final R2 r2, final R3 r3) {
-                rejP.reject(new M3<R1, R2, R3>(r1, r2, r3));
+                rejP.reject(M3.of(r1, r2, r3));
             }
 
-            @Override public void reject(final Throwable e) {
-                rejP.reject(e);
-            }
+            @Override public void reject(final Throwable e) { rejP.reject(e); }
         };
     }
     //-----------------------------------------------------------------------------------------------------------------
@@ -138,16 +134,14 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
     {
         return new RejectPromise4<R1, R2, R3, R4>() {
             @Override public void reject(final R1 r1, final R2 r2, final R3 r3, final R4 r4, final Throwable e) {
-                rejP.reject(new M4<R1, R2, R3, R4>(r1, r2, r3, r4), e);
+                rejP.reject(M4.of(r1, r2, r3, r4), e);
             }
 
             @Override public void reject(final R1 r1, final R2 r2, final R3 r3, final R4 r4) {
-                rejP.reject(new M4<R1, R2, R3, R4>(r1, r2, r3, r4));
+                rejP.reject(M4.of(r1, r2, r3, r4));
             }
 
-            @Override public void reject(final Throwable e) {
-                rejP.reject(e);
-            }
+            @Override public void reject(final Throwable e) { rejP.reject(e); }
         };
     }
     //-----------------------------------------------------------------------------------------------------------------
@@ -157,16 +151,14 @@ public abstract class Thenable<V, R> implements Resolution<V, R>
         return new RejectPromise5<R1, R2, R3, R4, R5>() {
             @Override public void
             reject(final R1 r1, final R2 r2, final R3 r3, final R4 r4, final R5 r5, final Throwable e) {
-                rejP.reject(new M5<R1, R2, R3, R4, R5>(r1, r2, r3, r4, r5), e);
+                rejP.reject(M5.of(r1, r2, r3, r4, r5), e);
             }
 
             @Override public void reject(final R1 r1, final R2 r2, final R3 r3, final R4 r4, final R5 r5) {
-                rejP.reject(new M5<R1, R2, R3, R4, R5>(r1, r2, r3, r4, r5));
+                rejP.reject(M5.of(r1, r2, r3, r4, r5));
             }
 
-            @Override public void reject(final Throwable e) {
-                rejP.reject(e);
-            }
+            @Override public void reject(final Throwable e) { rejP.reject(e); }
         };
     }
     //-----------------------------------------------------------------------------------------------------------------

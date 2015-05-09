@@ -3,27 +3,34 @@
 // under the terms of the Apache License, Version 2.0 (ALv2),
 // found at http://www.apache.org/licenses/LICENSE-2.0
 //---------------------------------------------------------------------------------------------------------------------
-package promises.impl;
+package promises;
+import javax.annotation.Nonnull;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 //---------------------------------------------------------------------------------------------------------------------
-public final class PromiseTestData
+public final class TestThread extends Thread implements ThreadFactory
 {
     //-----------------------------------------------------------------------------------------------------------------
-    static Object[][] fulfilled() {
-        return new Object[][] {
-            {null},
-            {123},
-            {"xyz"},
-            {true},
-        };
+    public final ExecutorService executor;
+    private Runnable runnable;
+    //-----------------------------------------------------------------------------------------------------------------
+    public TestThread()
+    {
+        executor = Executors.newSingleThreadExecutor(this);
     }
     //-----------------------------------------------------------------------------------------------------------------
-    static Object[][] rejected() {
-        return new Object[][] {
-            {null,  null,                   null},
-            {123,   null,                   null},
-            {"xyz", new Exception(),        Exception.class},
-            {true,  new RuntimeException(), RuntimeException.class},
-        };
+    @Override
+    public final Thread newThread(@Nonnull final Runnable runnable)
+    {
+        this.runnable = runnable;
+        return this;
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    @Override
+    public final void run()
+    {
+        runnable.run();
     }
     //-----------------------------------------------------------------------------------------------------------------
 }

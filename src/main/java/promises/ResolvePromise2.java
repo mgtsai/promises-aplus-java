@@ -17,7 +17,7 @@ public interface ResolvePromise2 extends ResolvePromise
      * @param v1 The 1st value which the target promise would be fulfilled with
      * @param v2 The 2nd value which the target promise would be fulfilled with
      */
-    public abstract void resolve(final Object v1, final Object v2);
+    void resolve(final Object v1, final Object v2);
     //-----------------------------------------------------------------------------------------------------------------
 }
 //---------------------------------------------------------------------------------------------------------------------
