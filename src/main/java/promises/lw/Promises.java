@@ -4,15 +4,7 @@
 // found at http://www.apache.org/licenses/LICENSE-2.0
 //---------------------------------------------------------------------------------------------------------------------
 package promises.lw;
-import promises.FR0;
-import promises.FR2;
-import promises.FR3;
-import promises.FR4;
-import promises.FR5;
-import promises.M2;
-import promises.M3;
-import promises.M4;
-import promises.M5;
+import promises.*;
 import promises.impl.LightWeightPromiseImpl;
 import java.util.concurrent.Executor;
 //---------------------------------------------------------------------------------------------------------------------
@@ -176,6 +168,32 @@ public class Promises
     public static <V> P<V> pr(final Throwable e)
     {
         return LightWeightPromiseImpl.<V>factory().rejectedPromise(null, e);
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    /**
+     * Creates a new promise with thenable.
+     *
+     * @param then The thenable for further resolving/rejecting the new promise
+     * @return The created promise
+     */
+    public static <V> P<V> pt(final Thenable<V> then)
+    {
+        return pn().then(new FR1<Object, RV<V>>() { @Override public RV<V> call(Object o) throws Throwable {
+            return then;
+        }});
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    /**
+     * Creates a new promise with thenable.
+     *
+     * @param then The callback wapped to a thenable for further resolving/rejecting the new promise
+     * @return The created promise
+     */
+    public static <V> P<V> pt(final F2<ResP<V>, RejP> then)
+    {
+        return pn().then(new FR1<Object, RV<V>>() { @Override public RV<V> call(Object o) throws Throwable {
+            return Thenable.of(then);
+        }});
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
