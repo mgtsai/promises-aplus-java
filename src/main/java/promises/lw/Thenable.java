@@ -27,7 +27,7 @@ public abstract class Thenable<V> implements RV<V>
             }
 
             @Override public void resolve(final V1 v1, final V2 v2) {
-                resP.resolve(new M2<V1, V2>(v1, v2));
+                resP.resolve(M2.of(v1, v2));
             }
         };
     }
@@ -41,7 +41,7 @@ public abstract class Thenable<V> implements RV<V>
             }
 
             @Override public void resolve(final V1 v1, final V2 v2, final V3 v3) {
-                resP.resolve(new M3<V1, V2, V3>(v1, v2, v3));
+                resP.resolve(M3.of(v1, v2, v3));
             }
         };
     }
@@ -56,7 +56,7 @@ public abstract class Thenable<V> implements RV<V>
             }
 
             @Override public void resolve(final V1 v1, final V2 v2, final V3 v3, final V4 v4) {
-                resP.resolve(new M4<V1, V2, V3, V4>(v1, v2, v3, v4));
+                resP.resolve(M4.of(v1, v2, v3, v4));
             }
         };
     }
@@ -71,7 +71,7 @@ public abstract class Thenable<V> implements RV<V>
             }
 
             @Override public void resolve(final V1 v1, final V2 v2, final V3 v3, final V4 v4, final V5 v5) {
-                resP.resolve(new M5<V1, V2, V3, V4, V5>(v1, v2, v3, v4, v5));
+                resP.resolve(M5.of(v1, v2, v3, v4, v5));
             }
         };
     }

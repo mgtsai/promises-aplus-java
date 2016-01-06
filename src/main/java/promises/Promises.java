@@ -44,7 +44,7 @@ public class Promises
      */
     public static <V1, V2> M2<V1, V2> v(final V1 v1, final V2 v2)
     {
-        return new M2<V1, V2>(v1, v2);
+        return M2.of(v1, v2);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -57,7 +57,7 @@ public class Promises
      */
     public static <V1, V2, V3> M3<V1, V2, V3> v(final V1 v1, final V2 v2, final V3 v3)
     {
-        return new M3<V1, V2, V3>(v1, v2, v3);
+        return M3.of(v1, v2, v3);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -72,7 +72,7 @@ public class Promises
      */
     public static <V1, V2, V3, V4> M4<V1, V2, V3, V4> v(final V1 v1, final V2 v2, final V3 v3, final V4 v4)
     {
-        return new M4<V1, V2, V3, V4>(v1, v2, v3, v4);
+        return M4.of(v1, v2, v3, v4);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -88,7 +88,7 @@ public class Promises
     public static <V1, V2, V3, V4, V5> M5<V1, V2, V3, V4, V5>
     v(final V1 v1, final V2 v2, final V3 v3, final V4 v4, final V5 v5)
     {
-        return new M5<V1, V2, V3, V4, V5>(v1, v2, v3, v4, v5);
+        return M5.of(v1, v2, v3, v4, v5);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -98,7 +98,7 @@ public class Promises
      */
     public static Promise pn()
     {
-        return UntypedPromiseImpl.factory.fulfilledPromise(null);
+        return UntypedPromiseImpl.factory.originPromise();
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -121,7 +121,7 @@ public class Promises
      */
     public static Promise pf(final Object v1, final Object v2)
     {
-        return pf(v(v1, v2));
+        return pf(M2.of(v1, v2));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -134,7 +134,7 @@ public class Promises
      */
     public static Promise pf(final Object v1, final Object v2, final Object v3)
     {
-        return pf(v(v1, v2, v3));
+        return pf(M3.of(v1, v2, v3));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -148,7 +148,7 @@ public class Promises
      */
     public static Promise pf(final Object v1, final Object v2, final Object v3, final Object v4)
     {
-        return pf(v(v1, v2, v3, v4));
+        return pf(M4.of(v1, v2, v3, v4));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -163,7 +163,7 @@ public class Promises
      */
     public static Promise pf(final Object v1, final Object v2, final Object v3, final Object v4, final Object v5)
     {
-        return pf(v(v1, v2, v3, v4, v5));
+        return pf(M5.of(v1, v2, v3, v4, v5));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -188,7 +188,7 @@ public class Promises
      */
     public static Promise pr(final Object r1, final Object r2, final Throwable e)
     {
-        return pr(v(r1, r2), e);
+        return pr(M2.of(r1, r2), e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -202,7 +202,7 @@ public class Promises
      */
     public static Promise pr(final Object r1, final Object r2, final Object r3, final Throwable e)
     {
-        return pr(v(r1, r2, r3), e);
+        return pr(M3.of(r1, r2, r3), e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -217,7 +217,7 @@ public class Promises
      */
     public static Promise pr(final Object r1, final Object r2, final Object r3, final Object r4, final Throwable e)
     {
-        return pr(v(r1, r2, r3, r4), e);
+        return pr(M4.of(r1, r2, r3, r4), e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -234,7 +234,7 @@ public class Promises
     public static Promise
     pr(final Object r1, final Object r2, final Object r3, final Object r4, final Object r5, final Throwable e)
     {
-        return pr(v(r1, r2, r3, r4, r5), e);
+        return pr(M5.of(r1, r2, r3, r4, r5), e);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -257,7 +257,7 @@ public class Promises
      */
     public static Promise pr(final Object r1, final Object r2)
     {
-        return pr(v(r1, r2), null);
+        return pr(M2.of(r1, r2), null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -270,7 +270,7 @@ public class Promises
      */
     public static Promise pr(final Object r1, final Object r2, final Object r3)
     {
-        return pr(v(r1, r2, r3), null);
+        return pr(M3.of(r1, r2, r3), null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -284,7 +284,7 @@ public class Promises
      */
     public static Promise pr(final Object r1, final Object r2, final Object r3, final Object r4)
     {
-        return pr(v(r1, r2, r3, r4), null);
+        return pr(M4.of(r1, r2, r3, r4), null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -299,7 +299,7 @@ public class Promises
      */
     public static Promise pr(final Object r1, final Object r2, final Object r3, final Object r4, final Object r5)
     {
-        return pr(v(r1, r2, r3, r4, r5), null);
+        return pr(M5.of(r1, r2, r3, r4, r5), null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -311,6 +311,37 @@ public class Promises
     public static Promise pr(final Throwable e)
     {
         return pr(null, e);
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    /**
+     * Creates a new promise by applying the specified thenable object for specifying the promise state running on the
+     * specified executor.
+     *
+     * @param exec The executor which the thenable object would be executed on; if {@code exec} is {@code null}, the
+     *             callback may be executed on the current thread
+     * @param thenable The thenable object
+     * @return The created promise
+     */
+    public static Promise pt(final Executor exec, final Thenable thenable)
+    {
+        return pn().then(
+            exec,
+            new OnFulfilled<Object>() { @Override public Object call(final Object dummy) { return thenable; }}
+        );
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    /**
+     * Creates a new promise by applying the specified thenable object for specifying the promise state.
+     *
+     * @param thenable The thenable object
+     * @return The created promise
+     */
+    public static Promise pt(final Thenable thenable)
+    {
+        return pn().then(
+            null,
+            new OnFulfilled<Object>() { @Override public Object call(final Object dummy) { return thenable; }}
+        );
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -464,18 +495,19 @@ public class Promises
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
-     * Asynchronously executes a callback function by returning a promise object to represent the execution state.
+     * Asynchronously executes the specified callback function on the specified executor by returning a promise object
+     * representing the execution state.
      * <p/>
      * The returned promise would be fulfilled with the value returned by the callback execution, or be rejected
      * with the exception thrown by the execution.
      *
      * @param exec The executor which the callback function would be executed on
      * @param onExec The callback function to be executed
-     * @return The promise representing the callback execution state
+     * @return The promise representing the execution state
      */
     public static Promise async(final Executor exec, final FR0<?> onExec)
     {
-        return pf(null).then(
+        return pn().then(
             exec,
             new OnFulfilled<Object>() { @Override public Object call(final Object dummy) throws Throwable {
                 return onExec.call();

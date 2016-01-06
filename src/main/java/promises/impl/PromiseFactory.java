@@ -8,13 +8,15 @@ package promises.impl;
 public interface PromiseFactory<P>
 {
     //-----------------------------------------------------------------------------------------------------------------
-    public abstract P fulfilledPromise(final Object value);
+    P originPromise();
     //-----------------------------------------------------------------------------------------------------------------
-    public abstract P rejectedPromise(final Object reason, final Throwable exception);
+    P fulfilledPromise(final Object value);
     //-----------------------------------------------------------------------------------------------------------------
-    public abstract P alwaysPendingPromise();
+    P rejectedPromise(final Object reason, final Throwable exception);
     //-----------------------------------------------------------------------------------------------------------------
-    public abstract P mutablePromise(final PromiseStore store);
+    P alwaysPendingPromise();
+    //-----------------------------------------------------------------------------------------------------------------
+    P mutablePromise(final PromiseStore store);
     //-----------------------------------------------------------------------------------------------------------------
 }
 //---------------------------------------------------------------------------------------------------------------------

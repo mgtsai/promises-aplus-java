@@ -18,7 +18,7 @@ public interface RejectPromise2
      * @param r2 The 2nd reason which the target promise would be rejected with
      * @param e The exception which the target promise would be rejected with
      */
-    public abstract void reject(final Object r1, final Object r2, final Throwable e);
+    void reject(final Object r1, final Object r2, final Throwable e);
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * Rejects the target promise.
@@ -26,14 +26,14 @@ public interface RejectPromise2
      * @param r1 The 1st reason which the target promise would be rejected with
      * @param r2 The 2nd reason which the target promise would be rejected with
      */
-    public abstract void reject(final Object r1, final Object r2);
+    void reject(final Object r1, final Object r2);
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * Rejects the target promise.
      *
      * @param e The exception which the target promise would be rejected with
      */
-    public abstract void reject(final Throwable e);
+    void reject(final Throwable e);
     //-----------------------------------------------------------------------------------------------------------------
 }
 //---------------------------------------------------------------------------------------------------------------------

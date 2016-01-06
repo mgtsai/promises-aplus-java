@@ -21,7 +21,7 @@ public interface F2<A1, A2>
      * @param a2 The 2nd argument
      * @throws Throwable The throwable thrown by this execution
      */
-    public abstract void call(final A1 a1, final A2 a2) throws Throwable;
+    void call(final A1 a1, final A2 a2) throws Throwable;
     //-----------------------------------------------------------------------------------------------------------------
 }
 //---------------------------------------------------------------------------------------------------------------------

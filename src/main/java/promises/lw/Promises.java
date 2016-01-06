@@ -44,7 +44,7 @@ public class Promises
      */
     public static <V1, V2> RV<M2<V1, V2>> v(final V1 v1, final V2 v2)
     {
-        return v(new M2<V1, V2>(v1, v2));
+        return v(M2.of(v1, v2));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -57,7 +57,7 @@ public class Promises
      */
     public static <V1, V2, V3> RV<M3<V1, V2, V3>> v(final V1 v1, final V2 v2, final V3 v3)
     {
-        return v(new M3<V1, V2, V3>(v1, v2, v3));
+        return v(M3.of(v1, v2, v3));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -72,7 +72,7 @@ public class Promises
      */
     public static <V1, V2, V3, V4> RV<M4<V1, V2, V3, V4>> v(final V1 v1, final V2 v2, final V3 v3, final V4 v4)
     {
-        return v(new M4<V1, V2, V3, V4>(v1, v2, v3, v4));
+        return v(M4.of(v1, v2, v3, v4));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -88,7 +88,7 @@ public class Promises
     public static <V1, V2, V3, V4, V5> RV<M5<V1, V2, V3, V4, V5>>
     v(final V1 v1, final V2 v2, final V3 v3, final V4 v4, final V5 v5)
     {
-        return v(new M5<V1, V2, V3, V4, V5>(v1, v2, v3, v4, v5));
+        return v(M5.of(v1, v2, v3, v4, v5));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -121,7 +121,7 @@ public class Promises
      */
     public static <V1, V2> P<M2<V1, V2>> pf(final V1 v1, final V2 v2)
     {
-        return pf(new M2<V1, V2>(v1, v2));
+        return pf(M2.of(v1, v2));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -134,7 +134,7 @@ public class Promises
      */
     public static <V1, V2, V3> P<M3<V1, V2, V3>> pf(final V1 v1, final V2 v2, final V3 v3)
     {
-        return pf(new M3<V1, V2, V3>(v1, v2, v3));
+        return pf(M3.of(v1, v2, v3));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -148,7 +148,7 @@ public class Promises
      */
     public static <V1, V2, V3, V4> P<M4<V1, V2, V3, V4>> pf(final V1 v1, final V2 v2, final V3 v3, final V4 v4)
     {
-        return pf(new M4<V1, V2, V3, V4>(v1, v2, v3, v4));
+        return pf(M4.of(v1, v2, v3, v4));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -164,7 +164,7 @@ public class Promises
     public static <V1, V2, V3, V4, V5> P<M5<V1, V2, V3, V4, V5>>
     pf(final V1 v1, final V2 v2, final V3 v3, final V4 v4, final V5 v5)
     {
-        return pf(new M5<V1, V2, V3, V4, V5>(v1, v2, v3, v4, v5));
+        return pf(M5.of(v1, v2, v3, v4, v5));
     }
     //-----------------------------------------------------------------------------------------------------------------
     /**

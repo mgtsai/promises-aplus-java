@@ -25,7 +25,7 @@ public interface FR3<A1, A2, A3, R>
      * @return The returned value
      * @throws Throwable The throwable thrown by this execution
      */
-    public abstract R call(final A1 a1, final A2 a2, final A3 a3) throws Throwable;
+    R call(final A1 a1, final A2 a2, final A3 a3) throws Throwable;
     //-----------------------------------------------------------------------------------------------------------------
 }
 //---------------------------------------------------------------------------------------------------------------------

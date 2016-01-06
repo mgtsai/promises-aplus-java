@@ -10,9 +10,6 @@ import promises.InternalExceptionHandler;
 public final class LoggerManager
 {
     //-----------------------------------------------------------------------------------------------------------------
-    private static final LoggerManager singleton = new LoggerManager();
-    private InternalExceptionHandler internalExceptionHandler = DEFAULT_INTERNAL_EXCEPTION_HANDLER;
-    //-----------------------------------------------------------------------------------------------------------------
     private static InternalExceptionHandler DEFAULT_INTERNAL_EXCEPTION_HANDLER = new InternalExceptionHandler() {
         @Override public void onCreated(final InternalException exception) {
 
@@ -22,6 +19,9 @@ public final class LoggerManager
 
         }
     };
+    //-----------------------------------------------------------------------------------------------------------------
+    private static final LoggerManager singleton = new LoggerManager();
+    private InternalExceptionHandler internalExceptionHandler = DEFAULT_INTERNAL_EXCEPTION_HANDLER;
     //-----------------------------------------------------------------------------------------------------------------
     public static LoggerManager singleton()
     {

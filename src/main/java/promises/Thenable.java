@@ -17,7 +17,7 @@ public abstract class Thenable
             @Override public void resolve(final Object v) { resP.resolve(v); }
 
             @Override public void resolve(final Object v1, final Object v2) {
-                resP.resolve(Promises.v(v1, v2));
+                resP.resolve(M2.of(v1, v2));
             }
         };
     }
@@ -28,7 +28,7 @@ public abstract class Thenable
             @Override public void resolve(final Object v) { resP.resolve(v); }
 
             @Override public void resolve(final Object v1, final Object v2, final Object v3) {
-                resP.resolve(Promises.v(v1, v2, v3));
+                resP.resolve(M3.of(v1, v2, v3));
             }
         };
     }
@@ -39,7 +39,7 @@ public abstract class Thenable
             @Override public void resolve(final Object v) { resP.resolve(v); }
 
             @Override public void resolve(final Object v1, final Object v2, final Object v3, final Object v4) {
-                resP.resolve(Promises.v(v1, v2, v3, v4));
+                resP.resolve(M4.of(v1, v2, v3, v4));
             }
         };
     }
@@ -51,7 +51,7 @@ public abstract class Thenable
 
             @Override public void
             resolve(final Object v1, final Object v2, final Object v3, final Object v4, final Object v5) {
-                resP.resolve(Promises.v(v1, v2, v3, v4, v5));
+                resP.resolve(M5.of(v1, v2, v3, v4, v5));
             }
         };
     }
@@ -60,16 +60,14 @@ public abstract class Thenable
     {
         return new RejectPromise2() {
             @Override public void reject(final Object r1, final Object r2, final Throwable e) {
-                rejP.reject(Promises.v(r1, r2), e);
+                rejP.reject(M2.of(r1, r2), e);
             }
 
             @Override public void reject(final Object r1, final Object r2) {
-                rejP.reject(Promises.v(r1, r2));
+                rejP.reject(M2.of(r1, r2));
             }
 
-            @Override public void reject(final Throwable e) {
-                rejP.reject(e);
-            }
+            @Override public void reject(final Throwable e) { rejP.reject(e); }
         };
     }
     //-----------------------------------------------------------------------------------------------------------------
@@ -77,16 +75,14 @@ public abstract class Thenable
     {
         return new RejectPromise3() {
             @Override public void reject(final Object r1, final Object r2, final Object r3, final Throwable e) {
-                rejP.reject(Promises.v(r1, r2, r3), e);
+                rejP.reject(M3.of(r1, r2, r3), e);
             }
 
             @Override public void reject(final Object r1, final Object r2, final Object r3) {
-                rejP.reject(Promises.v(r1, r2, r3));
+                rejP.reject(M3.of(r1, r2, r3));
             }
 
-            @Override public void reject(final Throwable e) {
-                rejP.reject(e);
-            }
+            @Override public void reject(final Throwable e) { rejP.reject(e); }
         };
     }
     //-----------------------------------------------------------------------------------------------------------------
@@ -95,16 +91,14 @@ public abstract class Thenable
         return new RejectPromise4() {
             @Override public void
             reject(final Object r1, final Object r2, final Object r3, final Object r4, final Throwable e) {
-                rejP.reject(Promises.v(r1, r2, r3, r4), e);
+                rejP.reject(M4.of(r1, r2, r3, r4), e);
             }
 
             @Override public void reject(final Object r1, final Object r2, final Object r3, final Object r4) {
-                rejP.reject(Promises.v(r1, r2, r3, r4));
+                rejP.reject(M4.of(r1, r2, r3, r4));
             }
 
-            @Override public void reject(final Throwable e) {
-                rejP.reject(e);
-            }
+            @Override public void reject(final Throwable e) { rejP.reject(e); }
         };
     }
     //-----------------------------------------------------------------------------------------------------------------
@@ -119,17 +113,15 @@ public abstract class Thenable
                 final Object r5,
                 final Throwable e
             ) {
-                rejP.reject(Promises.v(r1, r2, r3, r4, r5), e);
+                rejP.reject(M5.of(r1, r2, r3, r4, r5), e);
             }
 
             @Override public void
             reject(final Object r1, final Object r2, final Object r3, final Object r4, final Object r5) {
-                rejP.reject(Promises.v(r1, r2, r3, r4, r5));
+                rejP.reject(M5.of(r1, r2, r3, r4, r5));
             }
 
-            @Override public void reject(final Throwable e) {
-                rejP.reject(e);
-            }
+            @Override public void reject(final Throwable e) { rejP.reject(e); }
         };
     }
     //-----------------------------------------------------------------------------------------------------------------
@@ -139,7 +131,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of(final F2<ResolvePromise, RejectPromise> then)
+    public static Thenable thenable(final F2<ResolvePromise, RejectPromise> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -154,7 +146,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_1_2(final F2<ResolvePromise, RejectPromise2> then)
+    public static Thenable thenable_1_2(final F2<ResolvePromise, RejectPromise2> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -169,7 +161,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_1_3(final F2<ResolvePromise, RejectPromise3> then)
+    public static Thenable thenable_1_3(final F2<ResolvePromise, RejectPromise3> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -184,7 +176,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_1_4(final F2<ResolvePromise, RejectPromise4> then)
+    public static Thenable thenable_1_4(final F2<ResolvePromise, RejectPromise4> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -199,7 +191,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_1_5(final F2<ResolvePromise, RejectPromise5> then)
+    public static Thenable thenable_1_5(final F2<ResolvePromise, RejectPromise5> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -214,7 +206,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_2_1(final F2<ResolvePromise2, RejectPromise> then)
+    public static Thenable thenable_2_1(final F2<ResolvePromise2, RejectPromise> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -229,7 +221,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_2_2(final F2<ResolvePromise2, RejectPromise2> then)
+    public static Thenable thenable_2_2(final F2<ResolvePromise2, RejectPromise2> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -244,7 +236,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_2_3(final F2<ResolvePromise2, RejectPromise3> then)
+    public static Thenable thenable_2_3(final F2<ResolvePromise2, RejectPromise3> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -259,7 +251,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_2_4(final F2<ResolvePromise2, RejectPromise4> then)
+    public static Thenable thenable_2_4(final F2<ResolvePromise2, RejectPromise4> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -274,7 +266,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_2_5(final F2<ResolvePromise2, RejectPromise5> then)
+    public static Thenable thenable_2_5(final F2<ResolvePromise2, RejectPromise5> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -289,7 +281,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_3_1(final F2<ResolvePromise3, RejectPromise> then)
+    public static Thenable thenable_3_1(final F2<ResolvePromise3, RejectPromise> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -304,7 +296,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_3_2(final F2<ResolvePromise3, RejectPromise2> then)
+    public static Thenable thenable_3_2(final F2<ResolvePromise3, RejectPromise2> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -319,7 +311,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_3_3(final F2<ResolvePromise3, RejectPromise3> then)
+    public static Thenable thenable_3_3(final F2<ResolvePromise3, RejectPromise3> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -334,7 +326,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_3_4(final F2<ResolvePromise3, RejectPromise4> then)
+    public static Thenable thenable_3_4(final F2<ResolvePromise3, RejectPromise4> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -349,7 +341,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_3_5(final F2<ResolvePromise3, RejectPromise5> then)
+    public static Thenable thenable_3_5(final F2<ResolvePromise3, RejectPromise5> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -364,7 +356,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_4_1(final F2<ResolvePromise4, RejectPromise> then)
+    public static Thenable thenable_4_1(final F2<ResolvePromise4, RejectPromise> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -379,7 +371,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_4_2(final F2<ResolvePromise4, RejectPromise2> then)
+    public static Thenable thenable_4_2(final F2<ResolvePromise4, RejectPromise2> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -394,7 +386,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_4_3(final F2<ResolvePromise4, RejectPromise3> then)
+    public static Thenable thenable_4_3(final F2<ResolvePromise4, RejectPromise3> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -409,7 +401,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_4_4(final F2<ResolvePromise4, RejectPromise4> then)
+    public static Thenable thenable_4_4(final F2<ResolvePromise4, RejectPromise4> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -424,7 +416,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_4_5(final F2<ResolvePromise4, RejectPromise5> then)
+    public static Thenable thenable_4_5(final F2<ResolvePromise4, RejectPromise5> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -439,7 +431,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_5_1(final F2<ResolvePromise5, RejectPromise> then)
+    public static Thenable thenable_5_1(final F2<ResolvePromise5, RejectPromise> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -454,7 +446,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_5_2(final F2<ResolvePromise5, RejectPromise2> then)
+    public static Thenable thenable_5_2(final F2<ResolvePromise5, RejectPromise2> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -469,7 +461,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_5_3(final F2<ResolvePromise5, RejectPromise3> then)
+    public static Thenable thenable_5_3(final F2<ResolvePromise5, RejectPromise3> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -484,7 +476,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_5_4(final F2<ResolvePromise5, RejectPromise4> then)
+    public static Thenable thenable_5_4(final F2<ResolvePromise5, RejectPromise4> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
@@ -499,7 +491,7 @@ public abstract class Thenable
      * @param then The {@code then} function to be wrapped
      * @return The thenable object
      */
-    public static Thenable of_5_5(final F2<ResolvePromise5, RejectPromise5> then)
+    public static Thenable thenable_5_5(final F2<ResolvePromise5, RejectPromise5> then)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {

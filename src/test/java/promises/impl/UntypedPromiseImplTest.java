@@ -6,12 +6,11 @@
 package promises.impl;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
-import mockit.Injectable;
+import mockit.FullVerificationsInOrder;
 import mockit.StrictExpectations;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import promises.F2;
@@ -20,8 +19,6 @@ import promises.FR2;
 import promises.PromiseRejectedException;
 import promises.RejectPromise;
 import promises.ResolvePromise;
-import promises.TestData;
-import promises.TestLogger;
 import promises.Promise;
 import promises.PromiseState;
 import promises.TestStep;
@@ -29,112 +26,70 @@ import promises.TestUtil;
 import promises.Thenable;
 import promises.lw.P;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 //---------------------------------------------------------------------------------------------------------------------
-@RunWith(JUnitParamsRunner.class)
-public final class UntypedPromiseImplTest
+public final class UntypedPromiseImplTest extends BasePromiseTest<Object, UntypedPromiseImpl, Thenable>
 {
     //-----------------------------------------------------------------------------------------------------------------
-    @Injectable private TestLogger loggerMock = null;
-    @Injectable private ResolveAction resolveActionMock = null;
-    @Injectable private FR1<Object, ?> unusedOnFulfilled = null;
-    @Injectable private FR2<Object, Throwable, ?> unusedOnRejected = null;
+    private static final BasePromiseTest<Object, UntypedPromiseImpl, Thenable> test = new UntypedPromiseImplTest();
     //-----------------------------------------------------------------------------------------------------------------
-    private static final FR1<Object, Object> defaultOnFulfilled = new FR1<Object, Object>() {
-        @Override public Object call(final Object value) { return value; }
-    };
+    @Override
+    final PromiseFactory<? extends UntypedPromiseImpl> promiseFactory()
+    {
+        return UntypedPromiseImpl.factory;
+    }
     //-----------------------------------------------------------------------------------------------------------------
-    private static final FR2<Object, Throwable, Object> defaultOnRejected = new FR2<Object, Throwable, Object>() {
-        @Override public Object call(final Object reason, final Throwable exception) {
-            return UntypedPromiseImpl.factory.rejectedPromise(reason, exception);
-        }
-    };
+    @Override
+    final Object await(final UntypedPromiseImpl promise)
+        throws PromiseRejectedException, InterruptedException, TimeoutException
+    {
+        return promise.await();
+    }
     //-----------------------------------------------------------------------------------------------------------------
-    private static final F2<FR1<Object, ?>, FR2<Object, Throwable, ?>>
-    callNothing = new F2<FR1<Object, ?>, FR2<Object, Throwable, ?>>() {
-        @Override public void call(final FR1<Object, ?> onFulfilled, final FR2<Object, Throwable, ?> onRejected) { }
-    };
+    @Override
+    final Object await(final UntypedPromiseImpl promise, final long timeout, final TimeUnit unit)
+        throws PromiseRejectedException, InterruptedException, TimeoutException
+    {
+        return promise.await(timeout, unit);
+    }
     //-----------------------------------------------------------------------------------------------------------------
-    private static final TestStep.Return<UntypedPromiseImplTest, UntypedPromiseImpl>
-    retPendingPromise = new TestStep.Return<UntypedPromiseImplTest, UntypedPromiseImpl>() {
-        @Override public UntypedPromiseImpl
-        call(final UntypedPromiseImplTest self, final TestStep cbStep, final TestStep resStep) {
-            cbStep.pause();
-            resStep.finish();
-
-            return UntypedPromiseImpl.factory.fulfilledPromise(null)
-                .doThen(TestUtil.NOP_EXECUTOR, self.unusedOnFulfilled, self.unusedOnRejected);
-        }
-    };
+    @Override
+    final UntypedPromiseImpl toUntypedPromise(final UntypedPromiseImpl promise)
+    {
+        return promise.toTypedPromise().toUntypedPromise();
+    }
     //-----------------------------------------------------------------------------------------------------------------
-    private static final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, UntypedPromiseImpl>
-    suppPendingMutablePromise = new TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, UntypedPromiseImpl>() {
-        @Override public TestStep.Return<UntypedPromiseImplTest, UntypedPromiseImpl>
-        get(final TestStep.Return<UntypedPromiseImplTest, ?> retResolution) {
-            return new TestStep.Return<UntypedPromiseImplTest, UntypedPromiseImpl>() {
-                @Override public UntypedPromiseImpl
-                call(final UntypedPromiseImplTest self, final TestStep cbStep, final TestStep resStep) {
-                    cbStep.pause();
-                    final TestStep chainResolveStep = new TestStep();
-
-                    return promiseDoThen(
-                        UntypedPromiseImpl.factory.fulfilledPromise(null),
-                        new FR1<Object, Object>() { @Override public Object call(final Object value) throws Throwable {
-                            resStep.pause();
-                            return retResolution.call(self, cbStep, chainResolveStep);
-                        }},
-                        self.unusedOnRejected,
-                        resStep,
-                        chainResolveStep
-                    );
-                }
-            };
-        }
-    };
+    @Override
+    final TypedPromiseImpl<?, ?> toTypedPromise(final UntypedPromiseImpl promise)
+    {
+        return promise.toTypedPromise();
+    }
     //-----------------------------------------------------------------------------------------------------------------
-    private static final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, UntypedPromiseImpl>
-    suppResolvedMutablePromise = new TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, UntypedPromiseImpl>() {
-        @Override public TestStep.Return<UntypedPromiseImplTest, UntypedPromiseImpl>
-        get(final TestStep.Return<UntypedPromiseImplTest, ?> retResolution) {
-            return new TestStep.Return<UntypedPromiseImplTest, UntypedPromiseImpl>() {
-                @Override public UntypedPromiseImpl
-                call(final UntypedPromiseImplTest self, final TestStep cbStep, final TestStep resStep)
-                    throws Throwable
-                {
-                    resStep.finish();
-                    final TestStep step = new TestStep();
-                    try {
-                        return suppPendingMutablePromise.get(retResolution).call(self, cbStep, step);
-                    } finally {
-                        step.sync();
-                    }
-                }
-            };
-        }
-    };
+    @Override
+    final LightWeightPromiseImpl<?> toLightWeightPromise(final UntypedPromiseImpl promise)
+    {
+        return promise.toLightWeightPromise();
+    }
     //-----------------------------------------------------------------------------------------------------------------
-    private static final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, Thenable>
-    suppThenableResolve = new TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, Thenable>() {
-        @Override public TestStep.Return<UntypedPromiseImplTest, Thenable>
-        get(final TestStep.Return<UntypedPromiseImplTest, ?> retResolution) {
-            return new TestStep.Return<UntypedPromiseImplTest, Thenable>() {
-                @Override public Thenable
-                call(final UntypedPromiseImplTest self, final TestStep cbStep, final TestStep resStep) {
-                    return new Thenable() {
-                        @Override public void
-                        then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
-                            resP.resolve(retResolution.call(self, cbStep, resStep));
-                        }
-                    };
-                }
-            };
-        }
-    };
+    @Override
+    final void applyResolveAction(final UntypedPromiseImpl promise, final ResolveAction resolveAction)
+    {
+        promise.applyResolveAction(resolveAction);
+    }
     //-----------------------------------------------------------------------------------------------------------------
-    static Matcher<UntypedPromiseImpl> promiseMatcher(
+    @Override
+    final UntypedPromiseImpl doThen(
+        final UntypedPromiseImpl promise,
+        final Executor exec,
+        final FR1<Object, ?> onFulfilled,
+        final FR2<Object, Throwable, ?> onRejected
+    ) {
+        return promise.doThen(exec, onFulfilled, onRejected);
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    @Override
+    final Matcher<UntypedPromiseImpl> promiseMatcher(
         final String expectedType,
         final PromiseState expectedState,
         final Object expectedValue,
@@ -143,7 +98,7 @@ public final class UntypedPromiseImplTest
     ) {
         return new TypeSafeMatcher<UntypedPromiseImpl>() {
             @Override protected boolean matchesSafely(final UntypedPromiseImpl item) {
-                return TestUtil.equals(item.type(), expectedType)
+                return (expectedType == null || TestUtil.equals(item.type(), "UNTYPED-" + expectedType))
                     && item.state() == expectedState
                     && TestUtil.equals(item.value(), expectedValue)
                     && TestUtil.equals(item.reason(), expectedReason)
@@ -153,7 +108,7 @@ public final class UntypedPromiseImplTest
             @Override public void describeTo(final Description desc) {
                 desc.appendText("Untyped promise ").appendValueList(
                     "[", ", ", "]",
-                    expectedType, expectedState, expectedValue, expectedReason, expectedExceptionClass
+                    "UNTYPED-" + expectedType, expectedState, expectedValue, expectedReason, expectedExceptionClass
                 );
             }
 
@@ -166,43 +121,92 @@ public final class UntypedPromiseImplTest
         };
     }
     //-----------------------------------------------------------------------------------------------------------------
-    private static Object fulfilledResolution(final Object value)
+    @Override
+    final Object fulfilledResolution(final Object value)
     {
         return value;
     }
     //-----------------------------------------------------------------------------------------------------------------
-    private static Object rejectedResolution(final Object reason, final Throwable exception)
+    @Override
+    final Object rejectedResolution(final Object reason, final Throwable exception)
     {
         return UntypedPromiseImpl.factory.rejectedPromise(reason, exception);
     }
     //-----------------------------------------------------------------------------------------------------------------
-    private static Object alwaysPendingResolution()
+    @Override
+    final Object alwaysPendingResolution()
     {
         return UntypedPromiseImpl.factory.alwaysPendingPromise();
     }
     //-----------------------------------------------------------------------------------------------------------------
-    private static F2<FR1<Object, ?>, FR2<Object, Throwable, ?>> callOnFulfilled(final Object fulfilledValue)
+    @Override
+    final Thenable thenable(final Thenable thenable, final TestStep cbStep, final TestStep resStep)
     {
-        return new F2<FR1<Object, ?>, FR2<Object, Throwable, ?>>() {
-            @Override public void
-            call(final FR1<Object, ?> onFulfilled, final FR2<Object, Throwable, ?> onRejected) throws Throwable {
-                onFulfilled.call(fulfilledValue);
+        return new Thenable() {
+            @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
+                cbStep.pause();
+                thenable.then(resP, rejP);
+                resStep.finish();
             }
         };
     }
     //-----------------------------------------------------------------------------------------------------------------
-    private static F2<FR1<Object, ?>, FR2<Object, Throwable, ?>>
-    callOnRejected(final Object rejectedReason, final Throwable rejectedException)
+    @Override
+    final Thenable thenableNop()
     {
-        return new F2<FR1<Object, ?>, FR2<Object, Throwable, ?>>() {
-            @Override public void
-            call(final FR1<Object, ?> onFulfilled, final FR2<Object, Throwable, ?> onRejected) throws Throwable {
-                onRejected.call(rejectedReason, rejectedException);
+        return new Thenable() {
+            @Override public void then(final ResolvePromise resP, final RejectPromise rejP) { }
+        };
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    @Override
+    final Thenable thenableResolve(
+        final Return<?> retResolution,
+        final Params params,
+        final TestStep cbStep,
+        final TestStep resStep
+    ) {
+        return new Thenable() {
+            @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
+                resP.resolve(retResolution.call(params, cbStep, resStep));
             }
         };
     }
     //-----------------------------------------------------------------------------------------------------------------
-    private static Promise testUntypedPromise(final F2<FR1<Object, ?>, FR2<Object, Throwable, ?>> thenCall)
+    @Override
+    final Thenable thenableResolve(final Object value)
+    {
+        return new Thenable() { @Override public void then(final ResolvePromise resP, final RejectPromise rejP) {
+            resP.resolve(value);
+        }};
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    @Override
+    final Thenable thenableReject(final Object reason, final Throwable exception)
+    {
+        return new Thenable() { @Override public void then(final ResolvePromise resP, final RejectPromise rejP) {
+            rejP.reject(reason, exception);
+        }};
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    @Override
+    final Thenable thenableReject(final Object reason)
+    {
+        return new Thenable() { @Override public void then(final ResolvePromise resP, final RejectPromise rejP) {
+            rejP.reject(reason);
+        }};
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    @Override
+    final Thenable thenableReject(final Throwable exception)
+    {
+        return new Thenable() { @Override public void then(final ResolvePromise resP, final RejectPromise rejP) {
+            rejP.reject(exception);
+        }};
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    @Override
+    final Promise testPromise(final F2<FR1<Object, Object>, FR2<Object, Throwable, Object>> thenCall)
     {
         return new Promise() {
             @Override public PromiseState state() { return null; }
@@ -218,8 +222,8 @@ public final class UntypedPromiseImplTest
             then(final Executor exec, final FR1<?, ?> onFulfilled, final FR2<?, Throwable, ?> onRejected) {
                 try {
                     thenCall.call(
-                        onFulfilled != null ? ImplUtil.<FR1<Object, ?>>cast(onFulfilled) : defaultOnFulfilled,
-                        onRejected != null ? ImplUtil.<FR2<Object, Throwable, ?>>cast(onRejected) : defaultOnRejected
+                        ImplUtil.<FR1<Object, Object>>cast(onFulfilled),
+                        ImplUtil.<FR2<Object, Throwable, Object>>cast(onRejected)
                     );
                 } catch (final Throwable e) {
                     //
@@ -233,1543 +237,220 @@ public final class UntypedPromiseImplTest
             }
 
             @Override public Promise then(final FR1<?, ?> onFulfilled, final FR2<?, Throwable, ?> onRejected) {
-                return then(ImplUtil.CURRENT_THREAD_EXECUTOR, onFulfilled, onRejected);
+                return then(null, onFulfilled, onRejected);
             }
 
             @Override public Promise then(final FR1<?, ?> onFulfilled) {
-                return then(ImplUtil.CURRENT_THREAD_EXECUTOR, onFulfilled, null);
+                return then(null, onFulfilled, null);
             }
         };
     }
     //-----------------------------------------------------------------------------------------------------------------
-    private static UntypedPromiseImpl promiseDoThen(
-        final UntypedPromiseImpl srcPromise,
-        final FR1<?, ?> onFulfilled,
-        final FR2<?, Throwable, ?> onRejected,
-        final TestStep resolveStep,
-        final TestStep... chainResolveSteps
-    ) {
-        final ExecutorService exec = Executors.newSingleThreadExecutor();
-
-        try {
-            return srcPromise.doThen(exec, onFulfilled, onRejected);
-        } finally {
-            srcPromise.applyResolveAction(new ResolveAction() {
-                private void resolved() {
-                    exec.execute(new Runnable() { @Override public void run() {
-                        for (final TestStep chainResolveStep : chainResolveSteps)
-                            chainResolveStep.sync();
-                        resolveStep.finish();
-                        exec.shutdown();
-                    }});
-                }
-
-                @Override public void setAlwaysPending() { }
-                @Override public void setFulfilled(final Object value) { resolved(); }
-                @Override public void setRejected(final Object reason, final Throwable exception) { resolved(); }
-            });
+    @RunWith(JUnitParamsRunner.class)
+    public static final class FactoryMethods extends BaseFactoryMethods
+    {
+        public FactoryMethods()
+        {
+            test.super();
         }
     }
     //-----------------------------------------------------------------------------------------------------------------
-    private static <T> TestStep.Return<UntypedPromiseImplTest, T> retNoWait(final T ret)
+    @RunWith(JUnitParamsRunner.class)
+    public static final class AwaitMethods extends BaseAwaitMethods
     {
-        return TestStep.retNoWait(ret);
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    private static <T> TestStep.Return<UntypedPromiseImplTest, T> retThrowException(final Throwable exception)
-    {
-        return TestStep.retThrowException(exception);
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    private static TestStep.Return<UntypedPromiseImplTest, Thenable>
-    retThenableReject(final Object reason, final Throwable exception)
-    {
-        return new TestStep.Return<UntypedPromiseImplTest, Thenable>() {
-            @Override public Thenable
-            call(final UntypedPromiseImplTest self, final TestStep cbStep, final TestStep resStep) {
-                return new Thenable() {
-                    @Override public void then(final ResolvePromise resP, final RejectPromise rejP) {
-                        cbStep.pause();
-                        rejP.reject(reason, exception);
-                        resStep.finish();
-                    }
-                };
-            }
-        };
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    private static TestStep.Return<UntypedPromiseImplTest, Thenable> retThenableReject(final Object reason)
-    {
-        return new TestStep.Return<UntypedPromiseImplTest, Thenable>() {
-            @Override public Thenable
-            call(final UntypedPromiseImplTest self, final TestStep cbStep, final TestStep resStep) {
-                return new Thenable() {
-                    @Override public void then(final ResolvePromise resP, final RejectPromise rejP) {
-                        cbStep.pause();
-                        rejP.reject(reason);
-                        resStep.finish();
-                    }
-                };
-            }
-        };
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    private static TestStep.Return<UntypedPromiseImplTest, Thenable> retThenableReject(final Throwable exception)
-    {
-        return new TestStep.Return<UntypedPromiseImplTest, Thenable>() {
-            @Override public Thenable
-            call(final UntypedPromiseImplTest self, final TestStep cbStep, final TestStep resStep) {
-                return new Thenable() {
-                    @Override public void then(final ResolvePromise resP, final RejectPromise rejP) {
-                        cbStep.pause();
-                        rejP.reject(exception);
-                        resStep.finish();
-                    }
-                };
-            }
-        };
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    private static Object[][] paramsFulfilledResolution() { return new Object[][] {
-        {retNoWait(null),                                                                               false, "UNTYPED-FULFILLED", PromiseState.FULFILLED, null,  null, null},
-        {retNoWait(123),                                                                                false, "UNTYPED-FULFILLED", PromiseState.FULFILLED, 123,   null, null},
-        {retNoWait(testUntypedPromise(callOnFulfilled("abc"))),                                         false, "UNTYPED-FULFILLED", PromiseState.FULFILLED, "abc", null, null},
-        {retNoWait(UntypedPromiseImpl.factory.fulfilledPromise('D')),                                   false, "UNTYPED-FULFILLED", PromiseState.FULFILLED, 'D',   null, null},
-        {suppPendingMutablePromise.get(retNoWait(fulfilledResolution(4.5))),                            false, "UNTYPED-MUTABLE",   PromiseState.FULFILLED, 4.5,   null, null},
-        {suppResolvedMutablePromise.get(retNoWait(fulfilledResolution(false))),                         false, "UNTYPED-FULFILLED", PromiseState.FULFILLED, false, null, null},
-        {suppThenableResolve.get(retNoWait(null)),                                                      false, "UNTYPED-FULFILLED", PromiseState.FULFILLED, null,  null, null},
-        {suppThenableResolve.get(retNoWait(true)),                                                      false, "UNTYPED-FULFILLED", PromiseState.FULFILLED, true,  null, null},
-        {suppThenableResolve.get(retNoWait(testUntypedPromise(callOnFulfilled(678)))),                  false, "UNTYPED-FULFILLED", PromiseState.FULFILLED, 678,   null, null},
-        {suppThenableResolve.get(retNoWait(UntypedPromiseImpl.factory.fulfilledPromise("ijk"))),        false, "UNTYPED-FULFILLED", PromiseState.FULFILLED, "ijk", null, null},
-        {suppThenableResolve.get(suppPendingMutablePromise.get(retNoWait(fulfilledResolution('E')))),   false, "UNTYPED-MUTABLE",   PromiseState.FULFILLED, 'E',   null, null},
-        {suppThenableResolve.get(suppResolvedMutablePromise.get(retNoWait(fulfilledResolution(-9.0)))), false, "UNTYPED-FULFILLED", PromiseState.FULFILLED, -9.0,  null, null},
-    };}
-    //-----------------------------------------------------------------------------------------------------------------
-    private static Object[][] paramsRejectedResolution() { return new Object[][] {
-        {retThrowException(new Throwable()),                                                                             false, "UNTYPED-REJECTED", PromiseState.REJECTED, null, null,  Throwable.class},
-        {retNoWait(testUntypedPromise(callOnRejected(false, new Exception()))),                                          false, "UNTYPED-REJECTED", PromiseState.REJECTED, null, false, Exception.class},
-        {retNoWait(UntypedPromiseImpl.factory.rejectedPromise(true, new RuntimeException())),                            false, "UNTYPED-REJECTED", PromiseState.REJECTED, null, true,  RuntimeException.class},
-        {suppPendingMutablePromise.get(retNoWait(rejectedResolution(-987, new ClassCastException()))),                   false, "UNTYPED-MUTABLE",  PromiseState.REJECTED, null, -987,  ClassCastException.class},
-        {suppResolvedMutablePromise.get(retNoWait(rejectedResolution("pqr", new Throwable()))),                          false, "UNTYPED-REJECTED", PromiseState.REJECTED, null, "pqr", Throwable.class},
-        {suppThenableResolve.get(retThrowException(new Exception())),                                                    false, "UNTYPED-REJECTED", PromiseState.REJECTED, null, null,  Exception.class},
-        {suppThenableResolve.get(retNoWait(testUntypedPromise(callOnRejected('F', new RuntimeException())))),            false, "UNTYPED-REJECTED", PromiseState.REJECTED, null, 'F',   RuntimeException.class},
-        {suppThenableResolve.get(retNoWait(UntypedPromiseImpl.factory.rejectedPromise(-6.5, new ClassCastException()))), false, "UNTYPED-REJECTED", PromiseState.REJECTED, null, -6.5,  ClassCastException.class},
-        {suppThenableResolve.get(suppPendingMutablePromise.get(retNoWait(rejectedResolution(false, new Throwable())))),  false, "UNTYPED-MUTABLE",  PromiseState.REJECTED, null, false, Throwable.class},
-        {suppThenableResolve.get(suppResolvedMutablePromise.get(retNoWait(rejectedResolution(true, new Exception())))),  false, "UNTYPED-REJECTED", PromiseState.REJECTED, null, true,  Exception.class},
-        {retThenableReject(-654, new RuntimeException()),                                                                false, "UNTYPED-REJECTED", PromiseState.REJECTED, null, -654,  RuntimeException.class},
-        {retThenableReject("xyz"),                                                                                       false, "UNTYPED-REJECTED", PromiseState.REJECTED, null, "xyz", null},
-        {retThenableReject(new ClassCastException()),                                                                    false, "UNTYPED-REJECTED", PromiseState.REJECTED, null, null,  ClassCastException.class},
-    };}
-    //-----------------------------------------------------------------------------------------------------------------
-    private static Object[][] paramsPendingResolution() { return new Object[][] {
-        {retNoWait(testUntypedPromise(callNothing)),                                                    false, "UNTYPED-MUTABLE",        PromiseState.PENDING, null, null, null},
-        {retNoWait(UntypedPromiseImpl.factory.alwaysPendingPromise()),                                  true,  "UNTYPED-ALWAYS-PENDING", PromiseState.PENDING, null, null, null},
-        {retPendingPromise,                                                                             false, "UNTYPED-MUTABLE",        PromiseState.PENDING, null, null, null},
-        {suppPendingMutablePromise.get(retNoWait(alwaysPendingResolution())),                           true,  "UNTYPED-MUTABLE",        PromiseState.PENDING, null, null, null},
-        {suppResolvedMutablePromise.get(retNoWait(alwaysPendingResolution())),                          true,  "UNTYPED-ALWAYS-PENDING", PromiseState.PENDING, null, null, null},
-        {suppThenableResolve.get(retNoWait(testUntypedPromise(callNothing))),                           false, "UNTYPED-MUTABLE",        PromiseState.PENDING, null, null, null},
-        {suppThenableResolve.get(retNoWait(UntypedPromiseImpl.factory.alwaysPendingPromise())),         true,  "UNTYPED-ALWAYS-PENDING", PromiseState.PENDING, null, null, null},
-        {suppThenableResolve.get(retPendingPromise),                                                    false, "UNTYPED-MUTABLE",        PromiseState.PENDING, null, null, null},
-        {suppThenableResolve.get(suppPendingMutablePromise.get(retNoWait(alwaysPendingResolution()))),  true,  "UNTYPED-MUTABLE",        PromiseState.PENDING, null, null, null},
-        {suppThenableResolve.get(suppResolvedMutablePromise.get(retNoWait(alwaysPendingResolution()))), true,  "UNTYPED-ALWAYS-PENDING", PromiseState.PENDING, null, null, null},
-    };}
-    //-----------------------------------------------------------------------------------------------------------------
-    private static Object[][] paramsResolution()
-    {
-        return TestData.union(
-            paramsFulfilledResolution(),
-            paramsRejectedResolution(),
-            paramsPendingResolution()
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(source = PromiseTestData.class, method = "fulfilled")
-    public final void testFactoryFulfilledPromise(final Object fulfilledValue)
-    {
-        new StrictExpectations() {};
-
-        Assert.assertThat(
-            UntypedPromiseImpl.factory.fulfilledPromise(fulfilledValue),
-            promiseMatcher("UNTYPED-FULFILLED", PromiseState.FULFILLED, fulfilledValue, null, null)
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(source = PromiseTestData.class, method = "fulfilled")
-    public final void testFulfilledPromiseUnlimitedAwait(final Object fulfilledValue) throws Exception
-    {
-        new StrictExpectations() {};
-
-        Assert.assertEquals(fulfilledValue, UntypedPromiseImpl.factory.fulfilledPromise(fulfilledValue).await());
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(source = PromiseTestData.class, method = "fulfilled")
-    public final void testFulfilledPromiseLimitedAwait(final Object fulfilledValue) throws Exception
-    {
-        new StrictExpectations() {};
-
-        Assert.assertEquals(
-            fulfilledValue,
-            UntypedPromiseImpl.factory.fulfilledPromise(fulfilledValue).await(1, TimeUnit.SECONDS)
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(source = PromiseTestData.class, method = "fulfilled")
-    public final void testFulfilledPromiseToTypedPromise(final Object fulfilledValue)
-    {
-        new StrictExpectations() {};
-
-        Assert.assertThat(
-            UntypedPromiseImpl.factory.fulfilledPromise(fulfilledValue).toTypedPromise(),
-            TypedPromiseImplTest.promiseMatcher("TYPED-FULFILLED", PromiseState.FULFILLED, fulfilledValue, null, null)
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(source = PromiseTestData.class, method = "fulfilled")
-    public final void testFulfilledPromiseToLightWeightPromise(final Object fulfilledValue)
-    {
-        new StrictExpectations() {};
-
-        Assert.assertThat(
-            UntypedPromiseImpl.factory.fulfilledPromise(fulfilledValue).toLightWeightPromise(),
-            LightWeightPromiseImplTest.promiseMatcher("LW-FULFILLED", PromiseState.FULFILLED, fulfilledValue, null)
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(source = PromiseTestData.class, method = "fulfilled")
-    public final void testFulfilledPromiseApplyResolveAction(final Object fulfilledValue)
-    {
-        new StrictExpectations() {{
-            resolveActionMock.setFulfilled(fulfilledValue);
-        }};
-
-        UntypedPromiseImpl.factory.fulfilledPromise(fulfilledValue).applyResolveAction(resolveActionMock);
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(source = PromiseTestData.class, method = "fulfilled")
-    public final void testFulfilledPromiseNullOnFulfilled(final Object fulfilledValue)
-    {
-        new StrictExpectations() {};
-
-        final ExecutorService exec = Executors.newSingleThreadExecutor();
-
-        final UntypedPromiseImpl promise = UntypedPromiseImpl.factory.fulfilledPromise(fulfilledValue)
-            .doThen(exec, null, unusedOnRejected);
-
-        Assert.assertThat(
-            promise,
-            promiseMatcher("UNTYPED-FULFILLED", PromiseState.FULFILLED, fulfilledValue, null, null)
-        );
-
-        exec.shutdown();
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @SuppressWarnings("unused")
-    private static Object[][] paramsFulfilledPromiseResolve()
-    {
-        return TestData.merge(PromiseTestData.fulfilled(), paramsResolution());
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(method = "paramsFulfilledPromiseResolve")
-    public final void testFulfilledPromiseResolveBeforeCallback(
-        final Object fulfilledValue,
-        final TestStep.Return<UntypedPromiseImplTest, ?> retResolution,
-        final boolean isAlwaysPending,
-        final String expectedType,
-        final PromiseState expectedState,
-        final Object expectedValue,
-        final Object expectedReason,
-        final Class<?> expectedExceptionClass
-    ) {
-        new StrictExpectations() {{
-            loggerMock.log("onFulfilled", fulfilledValue);
-        }};
-
-        final TestStep resolveStep = new TestStep();
-
-        final UntypedPromiseImpl promise = UntypedPromiseImpl.factory.fulfilledPromise(fulfilledValue).doThen(
-            ImplUtil.CURRENT_THREAD_EXECUTOR,
-            new FR1<Object, Object>() { @Override public Object call(final Object value) throws Throwable {
-                loggerMock.log("onFulfilled", value);
-                return retResolution.call(UntypedPromiseImplTest.this, new TestStep().pass(), resolveStep);
-            }},
-            unusedOnRejected
-        );
-
-        resolveStep.sync();
-
-        Assert.assertThat(
-            promise,
-            promiseMatcher(expectedType, expectedState, expectedValue, expectedReason, expectedExceptionClass)
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(method = "paramsFulfilledPromiseResolve")
-    public final void testFulfilledPromiseResolveAfterCallback(
-        final Object fulfilledValue,
-        final TestStep.Return<UntypedPromiseImplTest, ?> retResolution,
-        final boolean isAlwaysPending,
-        final String expectedType,
-        final PromiseState expectedState,
-        final Object expectedValue,
-        final Object expectedReason,
-        final Class<?> expectedExceptionClass
-    ) {
-        new StrictExpectations() {{
-            loggerMock.log("onFulfilled", fulfilledValue);
-        }};
-
-        final TestStep callbackStep = new TestStep();
-        final TestStep resolveStep = new TestStep();
-
-        final UntypedPromiseImpl promise = promiseDoThen(
-            UntypedPromiseImpl.factory.fulfilledPromise(fulfilledValue),
-            new FR1<Object, Object>() { @Override public Object call(final Object value) throws Throwable {
-                loggerMock.log("onFulfilled", value);
-                return retResolution.call(UntypedPromiseImplTest.this, callbackStep, resolveStep);
-            }},
-            unusedOnRejected,
-            callbackStep
-        );
-
-        callbackStep.sync();
-        resolveStep.sync();
-
-        Assert.assertThat(
-            promise,
-            promiseMatcher("UNTYPED-MUTABLE", expectedState, expectedValue, expectedReason, expectedExceptionClass)
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(source = PromiseTestData.class, method = "rejected")
-    public final void testFactoryRejectedPromise(
-        final Object rejectedReason,
-        final Throwable rejectedException,
-        final Class<?> rejectedExceptionClass
-    ) {
-        new StrictExpectations() {};
-
-        Assert.assertThat(
-            UntypedPromiseImpl.factory.rejectedPromise(rejectedReason, rejectedException),
-            promiseMatcher("UNTYPED-REJECTED", PromiseState.REJECTED, null, rejectedReason, rejectedExceptionClass)
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(source = PromiseTestData.class, method = "rejected")
-    public final void testRejectedPromiseUnlimitedAwait(
-        final Object rejectedReason,
-        final Throwable rejectedException,
-        final Class<?> rejectedExceptionClass
-    ) throws Exception {
-        new StrictExpectations() {};
-
-        try {
-            UntypedPromiseImpl.factory.rejectedPromise(rejectedReason, rejectedException).await();
-            Assert.fail();
-        } catch (final PromiseRejectedException e) {
-            Assert.assertEquals(rejectedReason, e.reason());
-            Assert.assertEquals(rejectedException, e.exception());
+        public AwaitMethods()
+        {
+            test.super();
         }
     }
     //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(source = PromiseTestData.class, method = "rejected")
-    public final void testRejectedPromiseLimitedAwait(
-        final Object rejectedReason,
-        final Throwable rejectedException,
-        final Class<?> rejectedExceptionClass
-    ) throws Exception {
-        new StrictExpectations() {};
-
-        try {
-            UntypedPromiseImpl.factory.rejectedPromise(rejectedReason, rejectedException).await(1, TimeUnit.SECONDS);
-            Assert.fail();
-        } catch (final PromiseRejectedException e) {
-            Assert.assertEquals(rejectedReason, e.reason());
-            Assert.assertEquals(rejectedException, e.exception());
+    @RunWith(JUnitParamsRunner.class)
+    public static final class ToPromiseMethods extends BaseToPromiseMethods
+    {
+        public ToPromiseMethods()
+        {
+            test.super();
         }
     }
     //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(source = PromiseTestData.class, method = "rejected")
-    public final void testRejectedPromiseToTypedPromise(
-        final Object rejectedReason,
-        final Throwable rejectedException,
-        final Class<?> rejectedExceptionClass
-    ) {
-        new StrictExpectations() {};
-
-        Assert.assertThat(
-            UntypedPromiseImpl.factory.rejectedPromise(rejectedReason, rejectedException).toTypedPromise(),
-            TypedPromiseImplTest.promiseMatcher(
-                "TYPED-REJECTED",
-                PromiseState.REJECTED, null, rejectedReason, rejectedExceptionClass
-            )
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(source = PromiseTestData.class, method = "rejected")
-    public final void testRejectedPromiseToLightWeightPromise(
-        final Object rejectedReason,
-        final Throwable rejectedException,
-        final Class<?> rejectedExceptionClass
-    ) {
-        new StrictExpectations() {};
-
-        Assert.assertThat(
-            UntypedPromiseImpl.factory.rejectedPromise(rejectedReason, rejectedException).toLightWeightPromise(),
-            LightWeightPromiseImplTest.promiseMatcher(
-                "LW-REJECTED",
-                PromiseState.REJECTED, null, rejectedExceptionClass
-            )
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(source = PromiseTestData.class, method = "rejected")
-    public final void testRejectedPromiseApplyResolveAction(
-        final Object rejectedReason,
-        final Throwable rejectedException,
-        final Class<?> rejectedExceptionClass
-    ) {
-        new StrictExpectations() {{
-            resolveActionMock.setRejected(rejectedReason, rejectedException);
-        }};
-
-        UntypedPromiseImpl.factory.rejectedPromise(rejectedReason, rejectedException)
-            .applyResolveAction(resolveActionMock);
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(source = PromiseTestData.class, method = "rejected")
-    public final void testRejectedPromiseNullOnRejected(
-        final Object rejectedReason,
-        final Throwable rejectedException,
-        final Class<?> rejectedExceptionClass
-    ) {
-        new StrictExpectations() {};
-
-        final ExecutorService exec = Executors.newSingleThreadExecutor();
-
-        final UntypedPromiseImpl promise = UntypedPromiseImpl.factory
-            .rejectedPromise(rejectedReason, rejectedException)
-            .doThen(exec, unusedOnFulfilled, null);
-
-        Assert.assertThat(
-            promise,
-            promiseMatcher("UNTYPED-REJECTED", PromiseState.REJECTED, null, rejectedReason, rejectedExceptionClass)
-        );
-
-        exec.shutdown();
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @SuppressWarnings("unused")
-    private static Object[][] paramsRejectedPromiseResolve()
+    @RunWith(JUnitParamsRunner.class)
+    public static final class ApplyResolveActionMethods extends BaseApplyResolveActionMethods
     {
-        return TestData.merge(PromiseTestData.rejected(), paramsResolution());
+        public ApplyResolveActionMethods()
+        {
+            test.super();
+        }
     }
     //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(method = "paramsRejectedPromiseResolve")
-    public final void testRejectedPromiseResolveBeforeCallback(
-        final Object rejectedReason,
-        final Throwable rejectedException,
-        final Class<?> rejectedExceptionClass,
-        final TestStep.Return<UntypedPromiseImplTest, ?> retResolution,
-        final boolean isAlwaysPending,
-        final String expectedType,
-        final PromiseState expectedState,
-        final Object expectedValue,
-        final Object expectedReason,
-        final Class<?> expectedExceptionClass
-    ) {
-        new StrictExpectations() {{
-            loggerMock.log("onRejected", rejectedReason, rejectedException);
-        }};
+    @RunWith(JUnitParamsRunner.class)
+    public static final class DoThenMethods extends BaseDoThenMethods
+    {
+        public DoThenMethods()
+        {
+            test.super();
+        }
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    @RunWith(JUnitParamsRunner.class)
+    public static final class MultiCallbacks extends BaseMultiCallbacks
+    {
+        public MultiCallbacks()
+        {
+            test.super();
+        }
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    @RunWith(JUnitParamsRunner.class)
+    public static final class Chains extends BaseChains
+    {
+        public Chains()
+        {
+            test.super();
+        }
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    @RunWith(JUnitParamsRunner.class)
+    public static final class ThenMethods
+    {
+        //-------------------------------------------------------------------------------------------------------------
+        private static UntypedPromiseImpl newTestPromise()
+        {
+            return new UntypedPromiseImpl() {
+                @Override String type() { return null; }
+                @Override public PromiseState state() { return null; }
+                @Override public <V> V value() { return null; }
+                @Override public <R> R reason() { return null; }
+                @Override public Throwable exception() { return null; }
+                @Override public <V> V await() { return null; }
+                @Override public <V> V await(final long timeout, final TimeUnit unit) { return null; }
+                @Override public <V, R> TypedPromiseImpl<V, R> toTypedPromise() { return null; }
+                @Override public <V> LightWeightPromiseImpl<V> toLightWeightPromise() { return null; }
+                @Override void applyResolveAction(final ResolveAction resAction) { }
 
-        final TestStep resolveStep = new TestStep();
-
-        final UntypedPromiseImpl promise = UntypedPromiseImpl.factory
-            .rejectedPromise(rejectedReason, rejectedException)
-            .doThen(
-                ImplUtil.CURRENT_THREAD_EXECUTOR,
-                unusedOnFulfilled,
-                new FR2<Object, Throwable, Object>() {
-                    @Override public Object call(final Object reason, final Throwable exception) throws Throwable {
-                        loggerMock.log("onRejected", reason, exception);
-                        return retResolution.call(UntypedPromiseImplTest.this, new TestStep().pass(), resolveStep);
-                    }
+                @Override <V, R> UntypedPromiseImpl
+                doThen(final Executor exec, final FR1<V, ?> onFulfilled, final FR2<R, Throwable, ?> onRejected) {
+                    return null;
                 }
-            );
+            };
+        }
+        //-------------------------------------------------------------------------------------------------------------
+        private static FR1<?, ?> newTestOnFulfilled()
+        {
+            return new FR1<Object, Object>() {
+                @Override public Object call(final Object value) { return null; }
+            };
+        }
+        //-------------------------------------------------------------------------------------------------------------
+        private static FR2<?, Throwable, ?> newTestOnRejected()
+        {
+            return new FR2<Object, Throwable, Object>() {
+                @Override public Object call(final Object reason, final Throwable exception) { return null; }
+            };
+        }
+        //-------------------------------------------------------------------------------------------------------------
+        @SuppressWarnings("unused")
+        private static Object[][] paramThenWithExecutorAndWithOnRejected()
+        {
+            final Executor exec = newTestExecutor();
+            final FR1<?, ?> onFulfilled = newTestOnFulfilled();
+            final FR2<?, Throwable, ?> onRejected = newTestOnRejected();
 
-        resolveStep.sync();
+            return new Object[][] {
+                {exec, onFulfilled, onRejected},
+                {exec, onFulfilled, null},
+                {exec, null,        onRejected},
+                {null, onFulfilled, onRejected},
+                {null, onFulfilled, null},
+                {null, null,        onRejected},
+            };
+        }
 
-        Assert.assertThat(
-            promise,
-            promiseMatcher(expectedType, expectedState, expectedValue, expectedReason, expectedExceptionClass)
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(method = "paramsRejectedPromiseResolve")
-    public final void testRejectedPromiseResolveAfterCallback(
-        final Object rejectedReason,
-        final Throwable rejectedException,
-        final Class<?> rejectedExceptionClass,
-        final TestStep.Return<UntypedPromiseImplTest, ?> retResolution,
-        final boolean isAlwaysPending,
-        final String expectedType,
-        final PromiseState expectedState,
-        final Object expectedValue,
-        final Object expectedReason,
-        final Class<?> expectedExceptionClass
-    ) {
-        new StrictExpectations() {{
-            loggerMock.log("onRejected", rejectedReason, rejectedException);
-        }};
+        @Test
+        @Parameters(method = "paramThenWithExecutorAndWithOnRejected")
+        public final void testThenWithExecutorAndWithOnRejected(
+            final Executor exec,
+            final FR1<?, ?> onFulfilled,
+            final FR2<?, Throwable, ?> onRejected
+        ) {
+            final UntypedPromiseImpl promise = newTestPromise();
 
-        final TestStep callbackStep = new TestStep();
-        final TestStep resolveStep = new TestStep();
-
-        final UntypedPromiseImpl promise = promiseDoThen(
-            UntypedPromiseImpl.factory.rejectedPromise(rejectedReason, rejectedException),
-            unusedOnFulfilled,
-            new FR2<Object, Throwable, Object>() {
-                @Override public Object call(final Object reason, final Throwable exception) throws Throwable {
-                    loggerMock.log("onRejected", reason, exception);
-                    return retResolution.call(UntypedPromiseImplTest.this, callbackStep, resolveStep);
-                }
-            },
-            callbackStep
-        );
-
-        callbackStep.sync();
-        resolveStep.sync();
-
-        Assert.assertThat(
-            promise,
-            promiseMatcher("UNTYPED-MUTABLE", expectedState, expectedValue, expectedReason, expectedExceptionClass)
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    public final void testFactoryAlwaysPendingPromise()
-    {
-        new StrictExpectations() {};
-
-        Assert.assertThat(
-            UntypedPromiseImpl.factory.alwaysPendingPromise(),
-            promiseMatcher("UNTYPED-ALWAYS-PENDING", PromiseState.PENDING, null, null, null)
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test(expected = InterruptedException.class)
-    public final void testAlwaysPendingPromiseUnlimitedAwait() throws Exception
-    {
-        new StrictExpectations() {};
-
-        final Thread testThread = Thread.currentThread();
-
-        new Thread() {@Override public void run() {
-            TestUtil.sleep(100);
-            testThread.interrupt();
-        }}.start();
-
-        UntypedPromiseImpl.factory.alwaysPendingPromise().await();
-        Assert.fail();
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test(expected = TimeoutException.class)
-    public final void testAlwaysPendingPromiseLimitedAwait() throws Exception
-    {
-        new StrictExpectations() {};
-
-        UntypedPromiseImpl.factory.alwaysPendingPromise().await(100, TimeUnit.MILLISECONDS);
-        Assert.fail();
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    public final void testAlwaysPendingPromiseToTypedPromise()
-    {
-        new StrictExpectations() {};
-
-        Assert.assertThat(
-            UntypedPromiseImpl.factory.alwaysPendingPromise().toTypedPromise(),
-            TypedPromiseImplTest.promiseMatcher("TYPED-ALWAYS-PENDING", PromiseState.PENDING, null, null, null)
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    public final void testAlwaysPendingPromiseToLightWeightPromise()
-    {
-        new StrictExpectations() {};
-
-        Assert.assertThat(
-            UntypedPromiseImpl.factory.alwaysPendingPromise().toLightWeightPromise(),
-            LightWeightPromiseImplTest.promiseMatcher("LW-ALWAYS-PENDING", PromiseState.PENDING, null, null)
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    public final void testAlwaysPendingPromiseApplyResolveAction()
-    {
-        new StrictExpectations() {{
-            resolveActionMock.setAlwaysPending();
-        }};
-
-        UntypedPromiseImpl.factory.alwaysPendingPromise().applyResolveAction(resolveActionMock);
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @SuppressWarnings("unused")
-    private static Object[][] paramsAlwaysPendingDoThen()
-    {
-        return new Object[][] {{
-            new FR2<UntypedPromiseImplTest, Executor, UntypedPromiseImpl>() {
-                @Override public UntypedPromiseImpl call(final UntypedPromiseImplTest self, final Executor exec) {
-                    return UntypedPromiseImpl.factory.alwaysPendingPromise()
-                        .doThen(exec, self.unusedOnFulfilled, self.unusedOnRejected);
-                }
-            }
-        }, {
-            new FR2<UntypedPromiseImplTest, Executor, UntypedPromiseImpl>() {
-                @Override public UntypedPromiseImpl call(final UntypedPromiseImplTest self, final Executor exec) {
-                    return UntypedPromiseImpl.factory.alwaysPendingPromise()
-                        .doThen(exec, null, self.unusedOnRejected);
-                }
-            }
-        }, {
-            new FR2<UntypedPromiseImplTest, Executor, UntypedPromiseImpl>() {
-                @Override public UntypedPromiseImpl call(final UntypedPromiseImplTest self, final Executor exec) {
-                    return UntypedPromiseImpl.factory.alwaysPendingPromise()
-                        .doThen(exec, self.unusedOnFulfilled, null);
-                }
-            }
-        }};
-    }
-
-    @Test
-    @Parameters(method = "paramsAlwaysPendingDoThen")
-    public final void
-    testAlwaysPendingDoThen(final FR2<UntypedPromiseImplTest, Executor, UntypedPromiseImpl> retSrcPromise)
-        throws Throwable
-    {
-        new StrictExpectations() {};
-
-        final ExecutorService exec = Executors.newSingleThreadExecutor();
-
-        Assert.assertThat(
-            retSrcPromise.call(this, exec),
-            promiseMatcher("UNTYPED-ALWAYS-PENDING", PromiseState.PENDING, null, null, null)
-        );
-
-        exec.shutdown();
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    private static Object[][] paramsPrependMutable(final Object[][] baseParams)
-    {
-        return TestData.product(
-            new Object[][] {
-                {suppPendingMutablePromise, false},
-                {suppResolvedMutablePromise, true}
-            },
-            baseParams
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @SuppressWarnings("unused")
-    private static Object[][] paramsMutablePromise()
-    {
-        return paramsPrependMutable(paramsResolution());
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(method = "paramsMutablePromise")
-    public final void testFactoryMutablePromise(
-        final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, UntypedPromiseImpl> suppPromise,
-        final boolean isResolved,
-        final TestStep.Return<UntypedPromiseImplTest, ?> retResolution,
-        final boolean isAlwaysPending,
-        final String expectedType,
-        final PromiseState expectedState,
-        final Object expectedValue,
-        final Object expectedReason,
-        final Class<?> expectedExceptionClass
-    ) throws Throwable
-    {
-        new StrictExpectations() {};
-
-        final TestStep step = new TestStep();
-        final UntypedPromiseImpl promise = suppPromise.get(retResolution).call(this, new TestStep().pass(), step);
-
-        final Matcher<UntypedPromiseImpl> resolveMatcher = promiseMatcher(
-            "UNTYPED-MUTABLE",
-            expectedState, expectedValue, expectedReason, expectedExceptionClass
-        );
-
-        final Matcher<UntypedPromiseImpl> presyncMatcher = !isResolved
-            ? promiseMatcher("UNTYPED-MUTABLE", PromiseState.PENDING, null, null, null)
-            : resolveMatcher;
-
-        Assert.assertThat(promise, presyncMatcher);
-        step.sync();
-        Assert.assertThat(promise, resolveMatcher);
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(method = "paramsMutablePromise")
-    public final void testMutablePromiseUnlimitedAwait(
-        final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, UntypedPromiseImpl> suppPromise,
-        final boolean isResolved,
-        final TestStep.Return<UntypedPromiseImplTest, ?> retResolution,
-        final boolean isAlwaysPending,
-        final String expectedType,
-        final PromiseState expectedState,
-        final Object expectedValue,
-        final Object expectedReason,
-        final Class<?> expectedExceptionClass
-    ) throws Throwable
-    {
-        new StrictExpectations() {};
-
-        final TestStep threadStep = new TestStep();
-        final TestStep promiseStep = new TestStep();
-
-        if (!isResolved || expectedState == PromiseState.PENDING) {
-            new StrictExpectations() {{
-                loggerMock.log("sync");
-                loggerMock.log("await", expectedState, expectedValue, expectedReason, expectedExceptionClass);
+            new StrictExpectations(promise) {{
+                promise.doThen(exec, onFulfilled, onRejected);
             }};
 
-            threadStep.pass();
-        } else
-            new StrictExpectations() {{
-                loggerMock.log("await", expectedState, expectedValue, expectedReason, expectedExceptionClass);
-                loggerMock.log("sync");
+            promise.then(exec, onFulfilled, onRejected);
+
+            new FullVerificationsInOrder(promise) {};
+        }
+        //-------------------------------------------------------------------------------------------------------------
+        @SuppressWarnings("unused")
+        private static Object[][] paramThenWithExecutorAndWithoutOnRejected() { return new Object[][] {
+            {newTestExecutor()},
+            {null},
+        };}
+
+        @Test
+        @Parameters(method = "paramThenWithExecutorAndWithoutOnRejected")
+        public final void testThenWithExecutorAndWithoutOnRejected(final Executor exec)
+        {
+            final UntypedPromiseImpl promise = newTestPromise();
+            final FR1<?, ?> onFulfilled = newTestOnFulfilled();
+
+            new StrictExpectations(promise) {{
+                promise.doThen(exec, onFulfilled, null);
             }};
 
-        final UntypedPromiseImpl promise = suppPromise.get(retResolution)
-            .call(this, new TestStep().pass(), promiseStep);
+            promise.then(exec, onFulfilled);
 
-        final Thread testThread = Thread.currentThread();
+            new FullVerificationsInOrder(promise) {};
+        }
+        //-------------------------------------------------------------------------------------------------------------
+        @SuppressWarnings("unused")
+        private static Object[][] paramThenWithoutExecutorAndWithOnRejected()
+        {
+            final FR1<?, ?> onFulfilled = newTestOnFulfilled();
+            final FR2<?, Throwable, ?> onRejected = newTestOnRejected();
 
-        new Thread() { @Override public void run() {
-            threadStep.pause();
-            loggerMock.log("sync");
-            promiseStep.sync();
-
-            if (expectedState == PromiseState.PENDING) {
-                TestUtil.sleep(100);
-                testThread.interrupt();
-            }
-
-            threadStep.finish();
-        }}.start();
-
-        try {
-            final Object value = promise.await();
-            loggerMock.log("await", PromiseState.FULFILLED, value, null, null);
-        } catch (final PromiseRejectedException e) {
-            loggerMock.log("await", PromiseState.REJECTED, null, e.reason(), TestUtil.exceptionClass(e.exception()));
-        } catch (final InterruptedException e) {
-            loggerMock.log("await", PromiseState.PENDING, null, null, null);
+            return new Object[][] {
+                {onFulfilled, onRejected},
+                {onFulfilled, null},
+                {null,        onRejected},
+            };
         }
 
-        threadStep.sync();
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(method = "paramsMutablePromise")
-    public final void testMutablePromiseLimitedAwait(
-        final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, UntypedPromiseImpl> suppPromise,
-        final boolean isResolved,
-        final TestStep.Return<UntypedPromiseImplTest, ?> retResolution,
-        final boolean isAlwaysPending,
-        final String expectedType,
-        final PromiseState expectedState,
-        final Object expectedValue,
-        final Object expectedReason,
-        final Class<?> expectedExceptionClass
-    ) throws Throwable
-    {
-        new StrictExpectations() {};
+        @Test
+        @Parameters(method = "paramThenWithoutExecutorAndWithOnRejected")
+        public final void testThenWithoutExecutorAndWithOnRejected(
+            final FR1<?, ?> onFulfilled,
+            final FR2<?, Throwable, ?> onRejected
+        ) {
+            final UntypedPromiseImpl promise = newTestPromise();
 
-        final TestStep threadStep = new TestStep();
-        final TestStep promiseStep = new TestStep();
-
-        if (!isResolved || expectedState == PromiseState.PENDING) {
-            new StrictExpectations() {{
-                loggerMock.log("sync");
-                loggerMock.log("await", expectedState, expectedValue, expectedReason, expectedExceptionClass);
+            new StrictExpectations(promise) {{
+                promise.doThen(null, onFulfilled, onRejected);
             }};
 
-            threadStep.pass();
-        } else
-            new StrictExpectations() {{
-                loggerMock.log("await", expectedState, expectedValue, expectedReason, expectedExceptionClass);
-                loggerMock.log("sync");
+            promise.then(onFulfilled, onRejected);
+
+            new FullVerificationsInOrder(promise) {};
+        }
+        //-------------------------------------------------------------------------------------------------------------
+        @Test
+        public final void testThenWithoutExecutorAndWithoutOnRejected()
+        {
+            final UntypedPromiseImpl promise = newTestPromise();
+
+            final FR1<?, ?> onFulfilled = newTestOnFulfilled();
+
+            new StrictExpectations(promise) {{
+                promise.doThen(null, onFulfilled, null);
             }};
 
-        final UntypedPromiseImpl promise = suppPromise.get(retResolution)
-            .call(this, new TestStep().pass(), promiseStep);
+            promise.then(onFulfilled);
 
-        new Thread() { @Override public void run() {
-            threadStep.pause();
-            loggerMock.log("sync");
-            promiseStep.sync();
-            threadStep.finish();
-        }}.start();
-
-        try {
-            final Object value = promise.await(100, TimeUnit.MILLISECONDS);
-            loggerMock.log("await", PromiseState.FULFILLED, value, null, null);
-        } catch (final PromiseRejectedException e) {
-            loggerMock.log("await", PromiseState.REJECTED, null, e.reason(), TestUtil.exceptionClass(e.exception()));
-        } catch (final TimeoutException e) {
-            loggerMock.log("await", PromiseState.PENDING, null, null, null);
+            new FullVerificationsInOrder(promise) {};
         }
-
-        threadStep.sync();
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(method = "paramsMutablePromise")
-    public final void testMutablePromiseToTypedPromise(
-        final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, UntypedPromiseImpl> suppPromise,
-        final boolean isResolved,
-        final TestStep.Return<UntypedPromiseImplTest, ?> retResolution,
-        final boolean isAlwaysPending,
-        final String expectedType,
-        final PromiseState expectedState,
-        final Object expectedValue,
-        final Object expectedReason,
-        final Class<?> expectedExceptionClass
-    ) throws Throwable
-    {
-        new StrictExpectations() {};
-
-        final TestStep step = new TestStep();
-
-        final UntypedPromiseImpl promise = suppPromise.get(retResolution).call(this, new TestStep().pass(), step);
-
-        final TypedPromiseImpl<?, ?> toPromise1 = promise.toTypedPromise();
-
-        final String resolvedType
-            = expectedState == PromiseState.FULFILLED ? "TYPED-FULFILLED"
-            : expectedState == PromiseState.REJECTED ? "TYPED-REJECTED"
-            : isAlwaysPending ? "TYPED-ALWAYS-PENDING" : "TYPED-MUTABLE";
-
-        final Matcher<TypedPromiseImpl<?, ?>> resolveMatcher = TypedPromiseImplTest.promiseMatcher(
-            !isResolved ? "TYPED-MUTABLE" : resolvedType,
-            expectedState, expectedValue, expectedReason, expectedExceptionClass
-        );
-
-        final Matcher<TypedPromiseImpl<?, ?>> presyncMatcher = !isResolved
-            ? TypedPromiseImplTest.promiseMatcher("TYPED-MUTABLE", PromiseState.PENDING, null, null, null)
-            : resolveMatcher;
-
-        Assert.assertThat(toPromise1, presyncMatcher);
-
-        step.sync();
-
-        Assert.assertThat(toPromise1, resolveMatcher);
-
-        Assert.assertThat(
-            promise.toTypedPromise(),
-            TypedPromiseImplTest.promiseMatcher(
-                resolvedType,
-                expectedState, expectedValue, expectedReason, expectedExceptionClass
-            )
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(method = "paramsMutablePromise")
-    public final void testMutablePromiseToLightWeightPromise(
-        final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, UntypedPromiseImpl> suppPromise,
-        final boolean isResolved,
-        final TestStep.Return<UntypedPromiseImplTest, ?> retResolution,
-        final boolean isAlwaysPending,
-        final String expectedType,
-        final PromiseState expectedState,
-        final Object expectedValue,
-        final Object expectedReason,
-        final Class<?> expectedExceptionClass
-    ) throws Throwable
-    {
-        new StrictExpectations() {};
-
-        final TestStep step = new TestStep();
-
-        final UntypedPromiseImpl promise = suppPromise.get(retResolution).call(this, new TestStep().pass(), step);
-
-        final LightWeightPromiseImpl<?> toPromise1 = promise.toLightWeightPromise();
-
-        final String resolvedType
-            = expectedState == PromiseState.FULFILLED ? "LW-FULFILLED"
-            : expectedState == PromiseState.REJECTED ? "LW-REJECTED"
-            : isAlwaysPending ? "LW-ALWAYS-PENDING" : "LW-MUTABLE";
-
-        final Matcher<LightWeightPromiseImpl<?>> resolveMatcher = LightWeightPromiseImplTest.promiseMatcher(
-            !isResolved ? "LW-MUTABLE" : resolvedType,
-            expectedState, expectedValue, expectedExceptionClass
-        );
-
-        final Matcher<LightWeightPromiseImpl<?>> presyncMatcher = !isResolved
-            ? LightWeightPromiseImplTest.promiseMatcher("LW-MUTABLE", PromiseState.PENDING, null, null)
-            : resolveMatcher;
-
-        Assert.assertThat(toPromise1, presyncMatcher);
-
-        step.sync();
-
-        Assert.assertThat(toPromise1, resolveMatcher);
-
-        Assert.assertThat(
-            promise.toLightWeightPromise(),
-            LightWeightPromiseImplTest.promiseMatcher(
-                resolvedType,
-                expectedState, expectedValue, expectedExceptionClass
-            )
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(method = "paramsMutablePromise")
-    public final void testMutablePromiseApplyResolveAction(
-        final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, UntypedPromiseImpl> suppPromise,
-        final boolean isResolved,
-        final TestStep.Return<UntypedPromiseImplTest, ?> retResolution,
-        final boolean isAlwaysPending,
-        final String expectedType,
-        final PromiseState expectedState,
-        final Object expectedValue,
-        final Object expectedReason,
-        final Class<?> expectedExceptionClass
-    ) throws Throwable
-    {
-        switch (expectedState) {
-        case PENDING:
-            if (!isAlwaysPending)
-                new StrictExpectations() {{
-                    loggerMock.log("sync");
-                }};
-            else if (!isResolved)
-                new StrictExpectations() {{
-                    loggerMock.log("sync");
-                    loggerMock.log("setAlwaysPending");
-                }};
-            else
-                new StrictExpectations() {{
-                    loggerMock.log("setAlwaysPending");
-                    loggerMock.log("sync");
-                }};
-            break;
-
-        case FULFILLED:
-            if (!isResolved)
-                new StrictExpectations() {{
-                    loggerMock.log("sync");
-                    loggerMock.log("setFulfilled", expectedValue);
-                }};
-            else
-                new StrictExpectations() {{
-                    loggerMock.log("setFulfilled", expectedValue);
-                    loggerMock.log("sync");
-                }};
-            break;
-
-        case REJECTED:
-            if (!isResolved)
-                new StrictExpectations() {{
-                    loggerMock.log("sync");
-                    loggerMock.log("setRejected", expectedReason, expectedExceptionClass);
-                }};
-            else
-                new StrictExpectations() {{
-                    loggerMock.log("setRejected", expectedReason, expectedExceptionClass);
-                    loggerMock.log("sync");
-                }};
-            break;
-
-        default:
-            Assert.fail();
-        }
-
-        final TestStep promiseStep = new TestStep();
-
-        suppPromise.get(retResolution).call(this, new TestStep().pass(), promiseStep).applyResolveAction(
-            new ResolveAction() {
-                @Override public void setAlwaysPending() { loggerMock.log("setAlwaysPending"); }
-                @Override public void setFulfilled(final Object v) { loggerMock.log("setFulfilled", v); }
-
-                @Override public void setRejected(final Object r, final Throwable e) {
-                    loggerMock.log("setRejected", r, TestUtil.exceptionClass(e));
-                }
-            }
-        );
-
-        loggerMock.log("sync");
-        promiseStep.sync();
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @SuppressWarnings("unused")
-    private static Object[][] paramsFulfilledMutablePromise()
-    {
-        return paramsPrependMutable(paramsFulfilledResolution());
-    }
-
-    @Test
-    @Parameters(method = "paramsFulfilledMutablePromise")
-    public final void testMutablePromiseNullOnFulfilled(
-        final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, UntypedPromiseImpl> suppSrcPromise,
-        final boolean isSrcResolved,
-        final TestStep.Return<UntypedPromiseImplTest, ?> retResolution,
-        final boolean isAlwaysPending,
-        final String expectedType,
-        final PromiseState expectedState,
-        final Object expectedValue,
-        final Object expectedReason,
-        final Class<?> expectedExceptionClass
-    ) throws Throwable
-    {
-        new StrictExpectations() {};
-
-        final TestStep step = new TestStep();
-        final ExecutorService exec = Executors.newSingleThreadExecutor();
-
-        final UntypedPromiseImpl promise = suppSrcPromise.get(retResolution)
-            .call(this, new TestStep().pass(), step)
-            .doThen(exec, null, unusedOnRejected);
-
-        final Matcher<UntypedPromiseImpl> presyncMatcher;
-        final Matcher<UntypedPromiseImpl> resolveMatcher;
-
-        if (!isSrcResolved) {
-            presyncMatcher = promiseMatcher("UNTYPED-MUTABLE", PromiseState.PENDING, null, null, null);
-            resolveMatcher = promiseMatcher("UNTYPED-MUTABLE", PromiseState.FULFILLED, expectedValue, null, null);
-        } else
-            presyncMatcher = resolveMatcher
-                = promiseMatcher("UNTYPED-FULFILLED", PromiseState.FULFILLED, expectedValue, null, null);
-
-        Assert.assertThat(promise, presyncMatcher);
-        step.sync();
-        Assert.assertThat(promise, resolveMatcher);
-
-        exec.shutdown();
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @SuppressWarnings("unused")
-    private static Object[][] paramsRejectedMutablePromise()
-    {
-        return paramsPrependMutable(paramsRejectedResolution());
-    }
-
-    @Test
-    @Parameters(method = "paramsRejectedMutablePromise")
-    public final void testMutablePromiseNullOnRejected(
-        final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, UntypedPromiseImpl> suppSrcPromise,
-        final boolean isSrcResolved,
-        final TestStep.Return<UntypedPromiseImplTest, ?> retResolution,
-        final boolean isAlwaysPending,
-        final String expectedType,
-        final PromiseState expectedState,
-        final Object expectedValue,
-        final Object expectedReason,
-        final Class<?> expectedExceptionClass
-    ) throws Throwable
-    {
-        new StrictExpectations() {};
-
-        final TestStep step = new TestStep();
-        final ExecutorService exec = Executors.newSingleThreadExecutor();
-
-        final UntypedPromiseImpl promise = suppSrcPromise.get(retResolution)
-            .call(this, new TestStep().pass(), step)
-            .doThen(exec, unusedOnFulfilled, null);
-
-        final Matcher<UntypedPromiseImpl> presyncMatcher;
-        final Matcher<UntypedPromiseImpl> resolveMatcher;
-
-        if (!isSrcResolved) {
-            presyncMatcher = promiseMatcher("UNTYPED-MUTABLE", PromiseState.PENDING, null, null, null);
-
-            resolveMatcher = promiseMatcher(
-                "UNTYPED-MUTABLE",
-                PromiseState.REJECTED, null, expectedReason, expectedExceptionClass
-            );
-        } else
-            presyncMatcher = resolveMatcher = promiseMatcher(
-                "UNTYPED-REJECTED",
-                PromiseState.REJECTED, null, expectedReason, expectedExceptionClass
-            );
-
-        Assert.assertThat(promise, presyncMatcher);
-        step.sync();
-        Assert.assertThat(promise, resolveMatcher);
-
-        exec.shutdown();
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @SuppressWarnings("unused")
-    private static Object[][] paramsPendingMutablePromise()
-    {
-        return paramsPrependMutable(paramsPendingResolution());
-    }
-
-    @Test
-    @Parameters(method = "paramsPendingMutablePromise")
-    public final void testPendingMutablePromiseDoThen(
-        final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, UntypedPromiseImpl> suppSrcPromise,
-        final boolean isSrcResolved,
-        final TestStep.Return<UntypedPromiseImplTest, ?> retResolution,
-        final boolean isAlwaysPending,
-        final String expectedType,
-        final PromiseState expectedState,
-        final Object expectedValue,
-        final Object expectedReason,
-        final Class<?> expectedExceptionClass
-    ) throws Throwable
-    {
-        new StrictExpectations() {};
-
-        final TestStep step = new TestStep();
-        final ExecutorService exec = Executors.newSingleThreadExecutor();
-
-        final UntypedPromiseImpl promise = suppSrcPromise.get(retResolution).call(this, new TestStep().pass(), step)
-            .doThen(exec, unusedOnFulfilled, unusedOnRejected);
-
-        final String chainDstPromiseType = !isAlwaysPending ? "UNTYPED-MUTABLE" : "UNTYPED-ALWAYS-PENDING";
-        final String promiseType = !isSrcResolved ? "UNTYPED-MUTABLE" : chainDstPromiseType;
-
-        Assert.assertThat(promise, promiseMatcher(promiseType, PromiseState.PENDING, null, null, null));
-
-        step.sync();
-
-        Assert.assertThat(promise, promiseMatcher(promiseType, PromiseState.PENDING, null, null, null));
-
-        Assert.assertThat(
-            promise.doThen(exec, unusedOnFulfilled, unusedOnRejected),
-            promiseMatcher(chainDstPromiseType, PromiseState.PENDING, null, null, null)
-        );
-
-        exec.shutdown();
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    private void testMutablePromiseResolveBeforeCallback(
-        final TestStep.Return<UntypedPromiseImplTest, UntypedPromiseImpl> retSrcPromise,
-        final boolean isSrcResolved,
-        final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, ?> suppCallbackReturn,
-        final TestStep.Return<UntypedPromiseImplTest, ?> retResolution,
-        final String expectedType,
-        final PromiseState expectedState,
-        final Object expectedValue,
-        final Object expectedReason,
-        final Class<?> expectedExceptionClass
-    ) throws Throwable
-    {
-        final TestStep.Return<UntypedPromiseImplTest, ?> retCallback = suppCallbackReturn.get(retResolution);
-        final TestStep srcPromiseStep = new TestStep();
-        final TestStep resolveStep = new TestStep();
-
-        final UntypedPromiseImpl promise = retSrcPromise.call(this, new TestStep().pass(), srcPromiseStep).doThen(
-            ImplUtil.CURRENT_THREAD_EXECUTOR,
-            new FR1<Object, Object>() { @Override public Object call(final Object value) throws Throwable {
-                loggerMock.log("onFulfilled", value);
-                return retCallback.call(UntypedPromiseImplTest.this, new TestStep().pass(), resolveStep);
-            }},
-            new FR2<Object, Throwable, Object>() {
-                @Override public Object call(final Object reason, final Throwable exception) throws Throwable {
-                    loggerMock.log("onRejected", reason, exception);
-                    return retCallback.call(UntypedPromiseImplTest.this, new TestStep().pass(), resolveStep);
-                }
-            }
-        );
-
-        srcPromiseStep.sync();
-        resolveStep.sync();
-
-        final Matcher<UntypedPromiseImpl> resolveMatcher = !isSrcResolved
-            ? promiseMatcher("UNTYPED-MUTABLE", expectedState, expectedValue, expectedReason, expectedExceptionClass)
-            : promiseMatcher(expectedType, expectedState, expectedValue, expectedReason, expectedExceptionClass);
-
-        Assert.assertThat(promise, resolveMatcher);
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    private void testMutablePromiseResolveAfterCallback(
-        final TestStep.Return<UntypedPromiseImplTest, UntypedPromiseImpl> retSrcPromise,
-        final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, ?> suppCallbackReturn,
-        final TestStep.Return<UntypedPromiseImplTest, ?> retResolution,
-        final PromiseState expectedState,
-        final Object expectedValue,
-        final Object expectedReason,
-        final Class<?> expectedExceptionClass
-    ) throws Throwable
-    {
-        final TestStep.Return<UntypedPromiseImplTest, ?> retCallback = suppCallbackReturn.get(retResolution);
-        final TestStep srcPromiseStep = new TestStep();
-        final TestStep callbackStep = new TestStep();
-        final TestStep resolveStep = new TestStep();
-
-        final UntypedPromiseImpl promise = promiseDoThen(
-            retSrcPromise.call(this, new TestStep().pass(), srcPromiseStep),
-            new FR1<Object, Object>() { @Override public Object call(final Object value) throws Throwable {
-                loggerMock.log("onFulfilled", value);
-                return retCallback.call(UntypedPromiseImplTest.this, callbackStep, resolveStep);
-            }},
-            new FR2<Object, Throwable, Object>() {
-                @Override public Object call(final Object reason, final Throwable exception) throws Throwable {
-                    loggerMock.log("onRejected", reason, exception);
-                    return retCallback.call(UntypedPromiseImplTest.this, callbackStep, resolveStep);
-                }
-            },
-            callbackStep
-        );
-
-        srcPromiseStep.sync();
-        callbackStep.sync();
-        resolveStep.sync();
-
-        Assert.assertThat(
-            promise,
-            promiseMatcher("UNTYPED-MUTABLE", expectedState, expectedValue, expectedReason, expectedExceptionClass)
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @SuppressWarnings("unused")
-    private static Object[][] paramsFulfilledMutablePromiseResolve()
-    {
-        return paramsPrependMutable(TestData.product(
-            new Object[][] {{TestStep.suppIdentity()}, {suppThenableResolve}},
-            TestData.merge(PromiseTestData.fulfilled(), paramsResolution())
-        ));
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(method = "paramsFulfilledMutablePromiseResolve")
-    public final void testFulfilledMutablePromiseResolveBeforeCallback(
-        final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, UntypedPromiseImpl> suppSrcPromise,
-        final boolean isSrcResolved,
-        final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, ?> suppCallbackReturn,
-        final Object fulfilledValue,
-        final TestStep.Return<UntypedPromiseImplTest, ?> retResolution,
-        final boolean isAlwaysPending,
-        final String expectedType,
-        final PromiseState expectedState,
-        final Object expectedValue,
-        final Object expectedReason,
-        final Class<?> expectedExceptionClass
-    ) throws Throwable
-    {
-        new StrictExpectations() {{
-            loggerMock.log("onFulfilled", fulfilledValue);
-        }};
-
-        testMutablePromiseResolveBeforeCallback(
-            suppSrcPromise.get(retNoWait(fulfilledResolution(fulfilledValue))), isSrcResolved,
-            suppCallbackReturn, retResolution,
-            expectedType, expectedState, expectedValue, expectedReason, expectedExceptionClass
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(method = "paramsFulfilledMutablePromiseResolve")
-    public final void testFulfilledMutablePromiseResolveAfterCallback(
-        final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, UntypedPromiseImpl> suppSrcPromise,
-        final boolean isSrcResolved,
-        final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, ?> suppCallbackReturn,
-        final Object fulfilledValue,
-        final TestStep.Return<UntypedPromiseImplTest, ?> retResolution,
-        final boolean isAlwaysPending,
-        final String expectedType,
-        final PromiseState expectedState,
-        final Object expectedValue,
-        final Object expectedReason,
-        final Class<?> expectedExceptionClass
-    ) throws Throwable
-    {
-        new StrictExpectations() {{
-            loggerMock.log("onFulfilled", fulfilledValue);
-        }};
-
-        testMutablePromiseResolveAfterCallback(
-            suppSrcPromise.get(retNoWait(fulfilledResolution(fulfilledValue))),
-            suppCallbackReturn, retResolution,
-            expectedState, expectedValue, expectedReason, expectedExceptionClass
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @SuppressWarnings("unused")
-    private static Object[][] paramsRejectedMutablePromiseResolve()
-    {
-        return paramsPrependMutable(TestData.product(
-            new Object[][] {{TestStep.suppIdentity()}, {suppThenableResolve}},
-            TestData.merge(PromiseTestData.rejected(), paramsResolution())
-        ));
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(method = "paramsRejectedMutablePromiseResolve")
-    public final void testRejectedMutablePromiseResolveBeforeCallback(
-        final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, UntypedPromiseImpl> suppSrcPromise,
-        final boolean isSrcResolved,
-        final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, ?> suppCallbackReturn,
-        final Object rejectedReason,
-        final Throwable rejectedException,
-        final Class<?> rejectedExceptionClass,
-        final TestStep.Return<UntypedPromiseImplTest, ?> retResolution,
-        final boolean isAlwaysPending,
-        final String expectedType,
-        final PromiseState expectedState,
-        final Object expectedValue,
-        final Object expectedReason,
-        final Class<?> expectedExceptionClass
-    ) throws Throwable
-    {
-        new StrictExpectations() {{
-            loggerMock.log("onRejected", rejectedReason, rejectedException);
-        }};
-
-        testMutablePromiseResolveBeforeCallback(
-            suppSrcPromise.get(retNoWait(rejectedResolution(rejectedReason, rejectedException))), isSrcResolved,
-            suppCallbackReturn, retResolution,
-            expectedType, expectedState, expectedValue, expectedReason, expectedExceptionClass
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    @Parameters(method = "paramsRejectedMutablePromiseResolve")
-    public final void testRejectedMutablePromiseResolveAfterCallback(
-        final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, UntypedPromiseImpl> suppSrcPromise,
-        final boolean isSrcResolved,
-        final TestStep.ReturnSupplier<UntypedPromiseImplTest, Object, ?> suppCallbackReturn,
-        final Object rejectedReason,
-        final Throwable rejectedException,
-        final Class<?> rejectedExceptionClass,
-        final TestStep.Return<UntypedPromiseImplTest, ?> retResolution,
-        final boolean isAlwaysPending,
-        final String expectedType,
-        final PromiseState expectedState,
-        final Object expectedValue,
-        final Object expectedReason,
-        final Class<?> expectedExceptionClass
-    ) throws Throwable
-    {
-        new StrictExpectations() {{
-            loggerMock.log("onRejected", rejectedReason, rejectedException);
-        }};
-
-        testMutablePromiseResolveAfterCallback(
-            suppSrcPromise.get(retNoWait(rejectedResolution(rejectedReason, rejectedException))),
-            suppCallbackReturn, retResolution,
-            expectedState, expectedValue, expectedReason, expectedExceptionClass
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    private UntypedPromiseImpl
-    mutablePromiseMultiDoThen(final UntypedPromiseImpl srcPromise, final String id, final Object resolution)
-    {
-        return srcPromise.doThen(
-            ImplUtil.CURRENT_THREAD_EXECUTOR,
-            new FR1<Object, Object>() { @Override public Object call(final Object value) {
-                loggerMock.log(id, "onFulfilled", value);
-                return resolution;
-            }},
-            new FR2<Object, Throwable, Object>() {
-                @Override public Object call(final Object reason, final Throwable exception) {
-                    loggerMock.log(id, "onRejected", reason, TestUtil.exceptionClass(exception));
-                    return resolution;
-                }
-            }
-        );
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    private void mutablePromiseMultiApplyResolveAction(final UntypedPromiseImpl srcPromise, final String id)
-    {
-        srcPromise.applyResolveAction(new ResolveAction() {
-            @Override public void setAlwaysPending() { loggerMock.log(id, "setAlwaysPending"); }
-            @Override public void setFulfilled(final Object value) { loggerMock.log(id, "setFulfilled", value); }
-
-            @Override public void setRejected(final Object reason, final Throwable exception) {
-                loggerMock.log(id, "setRejected", reason, TestUtil.exceptionClass(exception));
-            }
-        });
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    private void testMutablePromiseMultiCallback(final Object srcPromiseResolution, final boolean isAlwaysPending)
-        throws Throwable
-    {
-        final TestStep step = new TestStep();
-
-        final UntypedPromiseImpl srcPromise = suppPendingMutablePromise.get(retNoWait(srcPromiseResolution))
-            .call(this, new TestStep().pass(), step);
-
-        final UntypedPromiseImpl promise0
-            = mutablePromiseMultiDoThen(srcPromise, "doThen-0", fulfilledResolution(123));
-
-        loggerMock.log("seperate-01");
-
-        mutablePromiseMultiApplyResolveAction(srcPromise, "applyResolveAction-1");
-
-        loggerMock.log("seperate-12");
-
-        final UntypedPromiseImpl promise2
-            = mutablePromiseMultiDoThen(srcPromise, "doThen-2", rejectedResolution("abc", new Throwable()));
-
-        loggerMock.log("seperate-23");
-
-        mutablePromiseMultiApplyResolveAction(srcPromise, "applyResolveAction-3");
-
-        loggerMock.log("seperate-34");
-
-        final UntypedPromiseImpl promise4
-            = mutablePromiseMultiDoThen(srcPromise, "doThen-4", alwaysPendingResolution());
-
-        Assert.assertThat(promise0, promiseMatcher("UNTYPED-MUTABLE", PromiseState.PENDING, null, null, null));
-        Assert.assertThat(promise2, promiseMatcher("UNTYPED-MUTABLE", PromiseState.PENDING, null, null, null));
-        Assert.assertThat(promise4, promiseMatcher("UNTYPED-MUTABLE", PromiseState.PENDING, null, null, null));
-
-        loggerMock.log("sync", "before");
-        step.sync();
-        loggerMock.log("sync", "after");
-
-        final Matcher<UntypedPromiseImpl> matcher0 = !isAlwaysPending
-            ? promiseMatcher("UNTYPED-MUTABLE", PromiseState.FULFILLED, 123, null, null)
-            : promiseMatcher("UNTYPED-MUTABLE", PromiseState.PENDING, null, null, null);
-
-        Assert.assertThat(promise0, matcher0);
-
-        final Matcher<UntypedPromiseImpl> matcher2 = !isAlwaysPending
-            ? promiseMatcher("UNTYPED-MUTABLE", PromiseState.REJECTED, null, "abc", Throwable.class)
-            : promiseMatcher("UNTYPED-MUTABLE", PromiseState.PENDING, null, null, null);
-
-        Assert.assertThat(promise2, matcher2);
-
-        final Matcher<UntypedPromiseImpl> matcher4
-            = promiseMatcher("UNTYPED-MUTABLE", PromiseState.PENDING, null, null, null);
-
-        Assert.assertThat(promise4, matcher4);
-
-        mutablePromiseMultiApplyResolveAction(srcPromise, "applyResolveAction-5");
-
-        loggerMock.log("seperate-56");
-
-        final Matcher<UntypedPromiseImpl> matcher6 = !isAlwaysPending
-            ? promiseMatcher("UNTYPED-FULFILLED", PromiseState.FULFILLED, true, null, null)
-            : promiseMatcher("UNTYPED-ALWAYS-PENDING", PromiseState.PENDING, null, null, null);
-
-        Assert.assertThat(mutablePromiseMultiDoThen(srcPromise, "doThen-6", fulfilledResolution(true)), matcher6);
-
-        loggerMock.log("seperate-67");
-
-        mutablePromiseMultiApplyResolveAction(srcPromise, "applyResolveAction-7");
-
-        loggerMock.log("seperate-78");
-
-        final Matcher<UntypedPromiseImpl> matcher8 = !isAlwaysPending
-            ? promiseMatcher("UNTYPED-REJECTED", PromiseState.REJECTED, null, 'D', Exception.class)
-            : promiseMatcher("UNTYPED-ALWAYS-PENDING", PromiseState.PENDING, null, null, null);
-
-        Assert.assertThat(
-            mutablePromiseMultiDoThen(srcPromise, "doThen-8", rejectedResolution('D', new Exception())),
-            matcher8
-        );
-
-        loggerMock.log("seperate-89");
-
-        mutablePromiseMultiApplyResolveAction(srcPromise, "applyResolveAction-9");
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    public final void testFulfilledMutablePromiseMultiCallback() throws Throwable
-    {
-        new StrictExpectations() {{
-            loggerMock.log("seperate-01");
-            loggerMock.log("seperate-12");
-            loggerMock.log("seperate-23");
-            loggerMock.log("seperate-34");
-            loggerMock.log("sync", "before");
-            loggerMock.log("doThen-0", "onFulfilled", "test");
-            loggerMock.log("applyResolveAction-1", "setFulfilled", "test");
-            loggerMock.log("doThen-2", "onFulfilled", "test");
-            loggerMock.log("applyResolveAction-3", "setFulfilled", "test");
-            loggerMock.log("doThen-4", "onFulfilled", "test");
-            loggerMock.log("sync", "after");
-            loggerMock.log("applyResolveAction-5", "setFulfilled", "test");
-            loggerMock.log("seperate-56");
-            loggerMock.log("doThen-6", "onFulfilled", "test");
-            loggerMock.log("seperate-67");
-            loggerMock.log("applyResolveAction-7", "setFulfilled", "test");
-            loggerMock.log("seperate-78");
-            loggerMock.log("doThen-8", "onFulfilled", "test");
-            loggerMock.log("seperate-89");
-            loggerMock.log("applyResolveAction-9", "setFulfilled", "test");
-        }};
-
-        testMutablePromiseMultiCallback(fulfilledResolution("test"), false);
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    public final void testRejectedMutablePromiseMultiCallback() throws Throwable
-    {
-        new StrictExpectations() {{
-            loggerMock.log("seperate-01");
-            loggerMock.log("seperate-12");
-            loggerMock.log("seperate-23");
-            loggerMock.log("seperate-34");
-            loggerMock.log("sync", "before");
-            loggerMock.log("doThen-0", "onRejected", "test", RuntimeException.class);
-            loggerMock.log("applyResolveAction-1", "setRejected", "test", RuntimeException.class);
-            loggerMock.log("doThen-2", "onRejected", "test", RuntimeException.class);
-            loggerMock.log("applyResolveAction-3", "setRejected", "test", RuntimeException.class);
-            loggerMock.log("doThen-4", "onRejected", "test", RuntimeException.class);
-            loggerMock.log("sync", "after");
-            loggerMock.log("applyResolveAction-5", "setRejected", "test", RuntimeException.class);
-            loggerMock.log("seperate-56");
-            loggerMock.log("doThen-6", "onRejected", "test", RuntimeException.class);
-            loggerMock.log("seperate-67");
-            loggerMock.log("applyResolveAction-7", "setRejected", "test", RuntimeException.class);
-            loggerMock.log("seperate-78");
-            loggerMock.log("doThen-8", "onRejected", "test", RuntimeException.class);
-            loggerMock.log("seperate-89");
-            loggerMock.log("applyResolveAction-9", "setRejected", "test", RuntimeException.class);
-        }};
-
-        testMutablePromiseMultiCallback(rejectedResolution("test", new RuntimeException()), false);
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    @Test
-    public final void testAlwaysPendingMutablePromiseMultiCallback() throws Throwable
-    {
-        new StrictExpectations() {{
-            loggerMock.log("seperate-01");
-            loggerMock.log("seperate-12");
-            loggerMock.log("seperate-23");
-            loggerMock.log("seperate-34");
-            loggerMock.log("sync", "before");
-            loggerMock.log("applyResolveAction-1", "setAlwaysPending");
-            loggerMock.log("applyResolveAction-3", "setAlwaysPending");
-            loggerMock.log("sync", "after");
-            loggerMock.log("applyResolveAction-5", "setAlwaysPending");
-            loggerMock.log("seperate-56");
-            loggerMock.log("seperate-67");
-            loggerMock.log("applyResolveAction-7", "setAlwaysPending");
-            loggerMock.log("seperate-78");
-            loggerMock.log("seperate-89");
-            loggerMock.log("applyResolveAction-9", "setAlwaysPending");
-        }};
-
-        testMutablePromiseMultiCallback(alwaysPendingResolution(), true);
+        //-------------------------------------------------------------------------------------------------------------
     }
     //-----------------------------------------------------------------------------------------------------------------
 }

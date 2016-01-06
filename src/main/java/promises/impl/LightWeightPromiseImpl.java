@@ -16,8 +16,40 @@ import java.util.concurrent.TimeoutException;
 public abstract class LightWeightPromiseImpl<V> extends BasePromiseImpl implements P<V>
 {
     //-----------------------------------------------------------------------------------------------------------------
+    private static final LightWeightPromiseImpl<Object> originPromise = new LightWeightPromiseImpl<Object>() {
+        @Override String type() { return "LW-ORIGIN"; }
+        @Override public PromiseState state() { return PromiseState.FULFILLED; }
+        @Override public Object value() { return null; }
+        @Override public Throwable exception() { return null; }
+        @Override public Object await() { return null; }
+        @Override public Object await(final long timeout, final TimeUnit unit) { return null; }
+
+        @Override public UntypedPromiseImpl toUntypedPromise() {
+            return UntypedPromiseImpl.factory.originPromise();
+        }
+
+        @Override public <R> TypedPromiseImpl<Object, R> toTypedPromise() {
+            return TypedPromiseImpl.<Object, R>factory().originPromise();
+        }
+
+        @Override void applyResolveAction(final ResolveAction resAction) {
+            resAction.setFulfilled(null);
+        }
+
+        @Override <VO> LightWeightPromiseImpl<VO> doThen(
+            final Executor exec,
+            final FR1<? super Object, ? extends RV<? extends VO>> onFulfilled,
+            final FR1<Throwable, ? extends RV<? extends VO>> onRejected
+        ) {
+            return FulfilledResolver.of(exec, onFulfilled)
+                .chainDstPromise(LightWeightPromiseImpl.<VO>factory(), exec, onFulfilled, 0, null);
+        }
+    };
+    //-----------------------------------------------------------------------------------------------------------------
     private static PromiseFactory<LightWeightPromiseImpl<Object>>
     factorySingleton = new PromiseFactory<LightWeightPromiseImpl<Object>>() {
+        @Override public LightWeightPromiseImpl<Object> originPromise() { return originPromise; }
+
         @Override public LightWeightPromiseImpl<Object> fulfilledPromise(final Object value) {
             return new LightWeightPromiseImpl<Object>() {
                 @Override String type() { return "LW-FULFILLED"; }
@@ -44,7 +76,7 @@ public abstract class LightWeightPromiseImpl<V> extends BasePromiseImpl implemen
                     final FR1<? super Object, ? extends RV<? extends VO>> onFulfilled,
                     final FR1<Throwable, ? extends RV<? extends VO>> onRejected
                 ) {
-                    return FulfilledResolver.of(onFulfilled)
+                    return FulfilledResolver.of(exec, onFulfilled)
                         .chainDstPromise(LightWeightPromiseImpl.<VO>factory(), exec, onFulfilled, 0, value);
                 }
             };
@@ -59,24 +91,24 @@ public abstract class LightWeightPromiseImpl<V> extends BasePromiseImpl implemen
                 @Override public Throwable exception() { return exception; }
 
                 @Override public Object await() throws PromiseRejectedException {
-                    throw new PromiseRejectedException(this, reason, exception);
+                    throw new PromiseRejectedException(this, null, exception);
                 }
 
                 @Override public Object
                 await(final long timeout, final TimeUnit unit) throws PromiseRejectedException {
-                    throw new PromiseRejectedException(this, reason, exception);
+                    throw new PromiseRejectedException(this, null, exception);
                 }
 
                 @Override public UntypedPromiseImpl toUntypedPromise() {
-                    return UntypedPromiseImpl.factory.rejectedPromise(reason, exception);
+                    return UntypedPromiseImpl.factory.rejectedPromise(null, exception);
                 }
 
                 @Override public <R> TypedPromiseImpl<Object, R> toTypedPromise() {
-                    return TypedPromiseImpl.<Object, R>factory().rejectedPromise(reason, exception);
+                    return TypedPromiseImpl.<Object, R>factory().rejectedPromise(null, exception);
                 }
 
                 @Override void applyResolveAction(final ResolveAction resAction) {
-                    resAction.setRejected(reason, exception);
+                    resAction.setRejected(null, exception);
                 }
 
                 @Override <VO> LightWeightPromiseImpl<VO> doThen(
@@ -84,8 +116,8 @@ public abstract class LightWeightPromiseImpl<V> extends BasePromiseImpl implemen
                     final FR1<? super Object, ? extends RV<? extends VO>> onFulfilled,
                     final FR1<Throwable, ? extends RV<? extends VO>> onRejected
                 ) {
-                    return RejectedResolver.of(onRejected)
-                        .chainDstPromise(LightWeightPromiseImpl.<VO>factory(), exec, onRejected, 0, reason, exception);
+                    return RejectedResolver.of(exec, onRejected)
+                        .chainDstPromise(LightWeightPromiseImpl.<VO>factory(), exec, onRejected, 0, null, exception);
                 }
             };
         }
@@ -161,8 +193,8 @@ public abstract class LightWeightPromiseImpl<V> extends BasePromiseImpl implemen
                 ) {
                     return store.doThen(
                         LightWeightPromiseImpl.<VO>factory(), exec,
-                        FulfilledResolver.of(onFulfilled), onFulfilled, 0,
-                        RejectedResolver.of(onRejected), onRejected, 0
+                        FulfilledResolver.<Object, FR1<Throwable, ?>>of(exec, onFulfilled), onFulfilled, 0,
+                        RejectedResolver.<FR1<? super Object, ?>>of(exec, onRejected), onRejected, 0
                     );
                 }
             };
@@ -192,13 +224,13 @@ public abstract class LightWeightPromiseImpl<V> extends BasePromiseImpl implemen
         final FR1<? super V, ? extends RV<? extends VO>> onFulfilled,
         final FR1<Throwable, ? extends RV<? extends VO>> onRejected
     ) {
-        return doThen(ImplUtil.executor(exec), onFulfilled, onRejected);
+        return doThen(exec, onFulfilled, onRejected);
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
     public final <VO> P<VO> then(final Executor exec, final FR1<? super V, ? extends RV<? extends VO>> onFulfilled)
     {
-        return doThen(ImplUtil.executor(exec), onFulfilled, null);
+        return doThen(exec, onFulfilled, null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
@@ -206,13 +238,13 @@ public abstract class LightWeightPromiseImpl<V> extends BasePromiseImpl implemen
         final FR1<? super V, ? extends RV<? extends VO>> onFulfilled,
         final FR1<Throwable, ? extends RV<? extends VO>> onRejected
     ) {
-        return doThen(ImplUtil.CURRENT_THREAD_EXECUTOR, onFulfilled, onRejected);
+        return doThen(null, onFulfilled, onRejected);
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
     public final <VO> P<VO> then(final FR1<? super V, ? extends RV<? extends VO>> onFulfilled)
     {
-        return doThen(ImplUtil.CURRENT_THREAD_EXECUTOR, onFulfilled, null);
+        return doThen(null, onFulfilled, null);
     }
     //-----------------------------------------------------------------------------------------------------------------
 }

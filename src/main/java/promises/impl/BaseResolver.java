@@ -13,8 +13,9 @@ import promises.lw.RV;
 import promises.lw.RejP;
 import promises.lw.ResP;
 import promises.typed.Resolution;
+import java.util.concurrent.Executor;
 //---------------------------------------------------------------------------------------------------------------------
-class BaseResolver
+abstract class BaseResolver<VCI, RCI>
 {
     //-----------------------------------------------------------------------------------------------------------------
     private static void resolveByUntypedPromise(final promises.Promise promise, final ResolveAction action)
@@ -22,7 +23,7 @@ class BaseResolver
         final OnePass onePass = new OnePass();
 
         promise.then(
-            ImplUtil.CURRENT_THREAD_EXECUTOR,
+            null,
             new promises.OnFulfilled<Object>() { @Override public Object call(final Object value) {
                 if (onePass.pass())
                     action.setFulfilled(value);
@@ -43,7 +44,7 @@ class BaseResolver
         final OnePass onePass = new OnePass();
 
         promise.then(
-            ImplUtil.CURRENT_THREAD_EXECUTOR,
+            null,
             new promises.typed.OnFulfilled<Object, Object, Object>() {
                 @Override public Resolution<?, ?> call(final Object value) {
                     if (onePass.pass())
@@ -66,7 +67,7 @@ class BaseResolver
         final OnePass onePass = new OnePass();
 
         promise.then(
-            ImplUtil.CURRENT_THREAD_EXECUTOR,
+            null,
             new OnFul<Object, Object>() { @Override public RV<?> call(final Object value) {
                 if (onePass.pass())
                     action.setFulfilled(value);
@@ -255,6 +256,16 @@ class BaseResolver
 
         action.setFulfilled(value);
     }
+    //-----------------------------------------------------------------------------------------------------------------
+    abstract <PO> PO delayedChainDstPromise(
+        final PromiseStore store,
+        final PromiseFactory<PO> factory,
+        final Executor exec,
+        final VCI onFulfilled,
+        final int onFulStackDiff,
+        final RCI onRejected,
+        final int onRejStackDiff
+    );
     //-----------------------------------------------------------------------------------------------------------------
 }
 //---------------------------------------------------------------------------------------------------------------------

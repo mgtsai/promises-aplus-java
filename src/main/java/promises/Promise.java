@@ -20,7 +20,7 @@ public interface Promise
      *
      * @return The promise state
      */
-    public abstract PromiseState state();
+    PromiseState state();
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * Returns the fulfilled value of this promise if in the {@code FULFILLED} state, or {@code null} if in other
@@ -28,7 +28,7 @@ public interface Promise
      *
      * @return The fulfilled value
      */
-    public abstract <V> V value();
+    <V> V value();
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * Returns the rejected reason of this promise if in the {@code REJECTED} state, or {@code null} if in other
@@ -36,7 +36,7 @@ public interface Promise
      *
      * @return The rejected reason
      */
-    public abstract <R> R reason();
+    <R> R reason();
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * Returns the rejected exception of this promise if in the {@code REJECTED} state, or {@code null} if in other
@@ -44,7 +44,7 @@ public interface Promise
      *
      * @return The rejected exception
      */
-    public abstract Throwable exception();
+    Throwable exception();
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * Waits until this promise is resolved by returning the fulfilled value when the state becomes {@code FULFILLED}
@@ -54,7 +54,7 @@ public interface Promise
      * @throws PromiseRejectedException If the state of this promise becomes {@code REJECTED}
      * @throws InterruptedException If the current thread is interrupted while waiting
      */
-    public abstract <V> V await() throws PromiseRejectedException, InterruptedException;
+    <V> V await() throws PromiseRejectedException, InterruptedException;
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * Waits until this promise is resolved by returning the fulfilled value when the state becomes {@code FULFILLED}
@@ -68,7 +68,7 @@ public interface Promise
      * @throws InterruptedException If the current thread is interrupted while waiting
      * @throws TimeoutException If the specified timeout is reached
      */
-    public abstract <V> V await(final long timeout, final TimeUnit unit)
+    <V> V await(final long timeout, final TimeUnit unit)
         throws PromiseRejectedException, InterruptedException, TimeoutException;
     //-----------------------------------------------------------------------------------------------------------------
     /**
@@ -76,51 +76,52 @@ public interface Promise
      *
      * @return The typed interface of this promise
      */
-    public abstract <V, R> promises.typed.Promise<V, R> toTypedPromise();
+    <V, R> promises.typed.Promise<V, R> toTypedPromise();
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * Returns the light-weight interface representing this promise.
      *
      * @return The light-weight interface of this promise
      */
-    public abstract <V> P<V> toLightWeightPromise();
+    <V> P<V> toLightWeightPromise();
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * The {@code then} method with {@code onRejected} callback by using the specified executor.
      *
-     * @param exec The executor on which the callback is executed
+     * @param exec The executor on which the callback is executed; if {@code exec} is {@code null}, the callback may be
+     *             executed on arbitrary thread
      * @param onFulfilled The {@code onFulfilled} callback being invoked when this promise is fulfilled
      * @param onRejected The {@code onRejected} callback being invoked when this promise is rejected
      * @return The next chained promise
      */
-    public abstract Promise
-    then(final Executor exec, final FR1<?, ?> onFulfilled, final FR2<?, Throwable, ?> onRejected);
+    Promise then(final Executor exec, final FR1<?, ?> onFulfilled, final FR2<?, Throwable, ?> onRejected);
     //-----------------------------------------------------------------------------------------------------------------
     /**
      * The {@code then} method without {@code onRejected} callback by using the specified executor.
      *
-     * @param exec The executor on which the callback is executed
+     * @param exec The executor on which the callback is executed; if {@code exec} is {@code null}, the callback may be
+     *             executed on arbitrary thread
      * @param onFulfilled The {@code onFulfilled} callback being invoked when this promise is fulfilled
      * @return The next chained promise
      */
-    public abstract Promise then(final Executor exec, final FR1<?, ?> onFulfilled);
+    Promise then(final Executor exec, final FR1<?, ?> onFulfilled);
     //-----------------------------------------------------------------------------------------------------------------
     /**
-     * The {@code then} method with {@code onRejected} callback by using the current-thread executor.
+     * The {@code then} method with {@code onRejected} callback.
      *
      * @param onFulfilled The {@code onFulfilled} callback being invoked when this promise is fulfilled
      * @param onRejected The {@code onRejected} callback being invoked when this promise is rejected
      * @return The next chained promise
      */
-    public abstract Promise then(final FR1<?, ?> onFulfilled, final FR2<?, Throwable, ?> onRejected);
+    Promise then(final FR1<?, ?> onFulfilled, final FR2<?, Throwable, ?> onRejected);
     //-----------------------------------------------------------------------------------------------------------------
     /**
-     * The {@code then} method without {@code onRejected} callback by using the current-thread executor.
+     * The {@code then} method without {@code onRejected} callback.
      *
      * @param onFulfilled The {@code onFulfilled} callback being invoked when this promise is fulfilled
      * @return The next chained promise
      */
-    public abstract Promise then(final FR1<?, ?> onFulfilled);
+    Promise then(final FR1<?, ?> onFulfilled);
     //-----------------------------------------------------------------------------------------------------------------
 }
 //---------------------------------------------------------------------------------------------------------------------

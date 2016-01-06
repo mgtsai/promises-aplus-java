@@ -16,7 +16,36 @@ import java.util.concurrent.TimeoutException;
 public abstract class UntypedPromiseImpl extends BasePromiseImpl implements Promise
 {
     //-----------------------------------------------------------------------------------------------------------------
+    private static final UntypedPromiseImpl originPromise = new UntypedPromiseImpl()
+    {
+        @Override String type() { return "UNTYPED-ORIGIN"; }
+        @Override public PromiseState state() { return PromiseState.FULFILLED; }
+        @Override public <V> V value() { return null; }
+        @Override public <R> R reason() { return null; }
+        @Override public Throwable exception() { return null; }
+        @Override public <V> V await() { return null; }
+        @Override public <V> V await(final long timeout, final TimeUnit unit) { return null; }
+
+        @Override public <V, R> TypedPromiseImpl<V, R> toTypedPromise() {
+            return TypedPromiseImpl.<V, R>factory().originPromise();
+        }
+
+        @Override public <V> LightWeightPromiseImpl<V> toLightWeightPromise() {
+            return LightWeightPromiseImpl.<V>factory().originPromise();
+        }
+
+        @Override void applyResolveAction(final ResolveAction resAction) { resAction.setFulfilled(null); }
+
+        @Override <V, R> UntypedPromiseImpl
+        doThen(final Executor exec, final FR1<V, ?> onFulfilled, final FR2<R, Throwable, ?> onRejected) {
+            final FulfilledResolver<FR1<? super V, ?>, ?> resolver = FulfilledResolver.of(exec, onFulfilled);
+            return resolver.chainDstPromise(factory, exec, onFulfilled, 0, null);
+        }
+    };
+    //-----------------------------------------------------------------------------------------------------------------
     public static PromiseFactory<UntypedPromiseImpl> factory = new PromiseFactory<UntypedPromiseImpl>() {
+        @Override public UntypedPromiseImpl originPromise() { return originPromise; }
+
         @Override public UntypedPromiseImpl fulfilledPromise(final Object value) {
             return new UntypedPromiseImpl() {
                 @Override String type() { return "UNTYPED-FULFILLED"; }
@@ -24,12 +53,8 @@ public abstract class UntypedPromiseImpl extends BasePromiseImpl implements Prom
                 @Override public <V> V value() { return ImplUtil.cast(value); }
                 @Override public <R> R reason() { return null; }
                 @Override public Throwable exception() { return null; }
-
                 @Override public <V> V await() { return ImplUtil.cast(value); }
-
-                @Override public <V> V await(final long timeout, final TimeUnit unit) {
-                    return ImplUtil.cast(value);
-                }
+                @Override public <V> V await(final long timeout, final TimeUnit unit) { return ImplUtil.cast(value); }
 
                 @Override public <V, R> TypedPromiseImpl<V, R> toTypedPromise() {
                     return TypedPromiseImpl.<V, R>factory().fulfilledPromise(value);
@@ -39,13 +64,11 @@ public abstract class UntypedPromiseImpl extends BasePromiseImpl implements Prom
                     return LightWeightPromiseImpl.<V>factory().fulfilledPromise(value);
                 }
 
-                @Override void applyResolveAction(final ResolveAction resAction) {
-                    resAction.setFulfilled(value);
-                }
+                @Override void applyResolveAction(final ResolveAction resAction) { resAction.setFulfilled(value); }
 
                 @Override <V, R> UntypedPromiseImpl
                 doThen(final Executor exec, final FR1<V, ?> onFulfilled, final FR2<R, Throwable, ?> onRejected) {
-                    final FulfilledResolver<FR1<? super V, ?>> resolver = FulfilledResolver.of(onFulfilled);
+                    final FulfilledResolver<FR1<? super V, ?>, ?> resolver = FulfilledResolver.of(exec, onFulfilled);
                     return resolver.chainDstPromise(factory, exec, onFulfilled, 0, value);
                 }
             };
@@ -81,7 +104,9 @@ public abstract class UntypedPromiseImpl extends BasePromiseImpl implements Prom
 
                 @Override <V, R> UntypedPromiseImpl
                 doThen(final Executor exec, final FR1<V, ?> onFulfilled, final FR2<R, Throwable, ?> onRejected) {
-                    final RejectedResolver<FR2<? super R, Throwable, ?>> resolver = RejectedResolver.of(onRejected);
+                    final RejectedResolver<?, FR2<? super R, Throwable, ?>>
+                        resolver = RejectedResolver.of(exec, onRejected);
+
                     return resolver.chainDstPromise(factory, exec, onRejected, 0, reason, exception);
                 }
             };
@@ -153,9 +178,11 @@ public abstract class UntypedPromiseImpl extends BasePromiseImpl implements Prom
 
                 @Override <V, R> UntypedPromiseImpl
                 doThen(final Executor exec, final FR1<V, ?> onFulfilled, final FR2<R, Throwable, ?> onRejected) {
-                    final FulfilledResolver<FR1<? super V, ?>> fulResolver = FulfilledResolver.of(onFulfilled);
-                    final RejectedResolver<FR2<? super R, Throwable, ?>> rejResolver = RejectedResolver.of(onRejected);
-                    return store.doThen(factory, exec, fulResolver, onFulfilled, 0, rejResolver, onRejected, 0);
+                    return store.doThen(
+                        factory, exec,
+                        FulfilledResolver.<V, FR2<? super R, Throwable, ?>>of(exec, onFulfilled), onFulfilled, 0,
+                        RejectedResolver.<FR1<? super V, ?>, R>of(exec, onRejected), onRejected, 0
+                    );
                 }
             };
         }
@@ -173,25 +200,25 @@ public abstract class UntypedPromiseImpl extends BasePromiseImpl implements Prom
     @Override
     public final Promise then(final Executor exec, final FR1<?, ?> onFulfilled, final FR2<?, Throwable, ?> onRejected)
     {
-        return doThen(ImplUtil.executor(exec), onFulfilled, onRejected);
+        return doThen(exec, onFulfilled, onRejected);
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
     public final Promise then(final Executor exec, final FR1<?, ?> onFulfilled)
     {
-        return doThen(ImplUtil.executor(exec), onFulfilled, null);
+        return doThen(exec, onFulfilled, null);
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
     public final Promise then(final FR1<?, ?> onFulfilled, final FR2<?, Throwable, ?> onRejected)
     {
-        return doThen(ImplUtil.CURRENT_THREAD_EXECUTOR, onFulfilled, onRejected);
+        return doThen(null, onFulfilled, onRejected);
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
     public final Promise then(final FR1<?, ?> onFulfilled)
     {
-        return doThen(ImplUtil.CURRENT_THREAD_EXECUTOR, onFulfilled, null);
+        return doThen(null, onFulfilled, null);
     }
     //-----------------------------------------------------------------------------------------------------------------
 }

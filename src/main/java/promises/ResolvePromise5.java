@@ -20,7 +20,7 @@ public interface ResolvePromise5 extends ResolvePromise
      * @param v4 The 4th value which the target promise would be fulfilled with
      * @param v5 The 5th value which the target promise would be fulfilled with
      */
-    public abstract void resolve(final Object v1, final Object v2, final Object v3, final Object v4, final Object v5);
+    void resolve(final Object v1, final Object v2, final Object v3, final Object v4, final Object v5);
     //-----------------------------------------------------------------------------------------------------------------
 }
 //---------------------------------------------------------------------------------------------------------------------
