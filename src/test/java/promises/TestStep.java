@@ -33,15 +33,19 @@ public final class TestStep
         finish.countDown();
     }
     //-----------------------------------------------------------------------------------------------------------------
-    public final void sync()
+    public final void waitFinished()
     {
-        pause.countDown();
-
         try {
             finish.await(1, TimeUnit.SECONDS);
         } catch (final InterruptedException e) {
             //
         }
+    }
+    //-----------------------------------------------------------------------------------------------------------------
+    public final void sync()
+    {
+        pass();
+        waitFinished();
     }
     //-----------------------------------------------------------------------------------------------------------------
 }

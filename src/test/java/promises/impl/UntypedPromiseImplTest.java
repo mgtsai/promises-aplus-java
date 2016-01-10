@@ -140,11 +140,10 @@ public final class UntypedPromiseImplTest extends BasePromiseTest<Object, Untype
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
-    final Thenable thenable(final Thenable thenable, final TestStep cbStep, final TestStep resStep)
+    final Thenable thenable(final Thenable thenable, final TestStep resStep)
     {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
-                cbStep.pause();
                 thenable.then(resP, rejP);
                 resStep.finish();
             }
@@ -160,15 +159,11 @@ public final class UntypedPromiseImplTest extends BasePromiseTest<Object, Untype
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
-    final Thenable thenableResolve(
-        final Return<?> retResolution,
-        final Params params,
-        final TestStep cbStep,
-        final TestStep resStep
-    ) {
+    final Thenable thenableResolve(final Return<?> retResolution, final Params params, final TestStep resStep)
+    {
         return new Thenable() {
             @Override public void then(final ResolvePromise resP, final RejectPromise rejP) throws Throwable {
-                resP.resolve(retResolution.call(params, cbStep, resStep));
+                resP.resolve(retResolution.call(params, resStep));
             }
         };
     }

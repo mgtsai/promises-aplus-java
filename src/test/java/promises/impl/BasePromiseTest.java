@@ -16,6 +16,7 @@ import org.junit.Test;
 import promises.F2;
 import promises.FR1;
 import promises.FR2;
+import promises.FR3;
 import promises.PromiseRejectedException;
 import promises.PromiseState;
 import promises.TestData;
@@ -41,78 +42,76 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
         @Override public void call(final FR1<Object, R> onFulfilled, final FR2<Object, Throwable, R> onRejected) { }
     };
     //-----------------------------------------------------------------------------------------------------------------
-    private final Return<P> retPendingPromise = new Return<P>() {
-        @Override P call(final Params params, final TestStep cbStep, final TestStep resStep) {
-            cbStep.pause();
-            resStep.finish();
+    private final Return<P>
+    retPendingPromise = new Return<P>() { @Override P call(final Params params, final TestStep resStep) {
+        resStep.finish();
 
-            return doThen(
-                promiseFactory().originPromise(),
-                TestUtil.NOP_EXECUTOR,
-                params.unusedOnFulfilled,
-                params.unusedOnRejected
-            );
-        }
-    };
+        return doThen(
+            promiseFactory().originPromise(),
+            TestUtil.NOP_EXECUTOR,
+            params.unusedOnFulfilled,
+            params.unusedOnRejected
+        );
+    }};
     //-----------------------------------------------------------------------------------------------------------------
     private final ReturnSupplier<R, R> suppIdentity = new ReturnSupplier<R, R>() {
         @Override Return<R> get(final Return<? extends R> retResolution) {
-            return new Return<R>() {
-                @Override R call(final Params params, final TestStep cbStep, final TestStep resStep) throws Throwable {
-                    return retResolution.call(params, cbStep, resStep);
-                }
-            };
+            return new Return<R>() { @Override R call(final Params params, final TestStep resStep) throws Throwable {
+                return retResolution.call(params, resStep);
+            }};
         }
     };
     //-----------------------------------------------------------------------------------------------------------------
     private final ReturnSupplier<R, P> suppPendingMutablePromise = new ReturnSupplier<R, P>() {
         @Override Return<P> get(final Return<? extends R> retResolution) {
-            return new Return<P>() {
-                @Override P call(final Params params, final TestStep cbStep, final TestStep resStep) {
-                    cbStep.pause();
+            return new Return<P>() { @Override P call(final Params params, final TestStep resStep) {
+                final ExecutorService exec = Executors.newSingleThreadExecutor();
+                final TestStep innerResStep = new TestStep();
 
-                    final ExecutorService exec = Executors.newSingleThreadExecutor();
-                    final TestStep chainResStep = new TestStep();
-
+                try {
                     return doThen(
                         promiseFactory().originPromise(),
                         exec,
                         new FR1<Object, R>() { @Override public R call(final Object value) throws Throwable {
-                            afterCallback(exec, resStep, chainResStep);
                             resStep.pause();
-                            return retResolution.call(params, cbStep, chainResStep);
+
+                            exec.execute(new Runnable() { @Override public void run() {
+                                innerResStep.waitFinished();
+                                resStep.finish();
+                                exec.shutdown();
+                            }});
+
+                            return retResolution.call(params, innerResStep);
                         }},
                         params.unusedOnRejected
                     );
+                } finally {
+                    innerResStep.pass();
                 }
-            };
+            }};
         }
     };
     //-----------------------------------------------------------------------------------------------------------------
     private final ReturnSupplier<R, P> suppResolvedMutablePromise = new ReturnSupplier<R, P>() {
         @Override Return<P> get(final Return<? extends R> retResolution) {
-            return new Return<P>() {
-                @Override P call(final Params params, final TestStep cbStep, final TestStep resStep) throws Throwable {
-                    resStep.finish();
-                    final TestStep pendingResStep = new TestStep();
+            return new Return<P>() { @Override P call(final Params params, final TestStep resStep) throws Throwable {
+                final TestStep innerResStep = new TestStep();
 
-                    try {
-                        return suppPendingMutablePromise.get(retResolution).call(params, cbStep, pendingResStep);
-                    } finally {
-                        pendingResStep.sync();
-                    }
+                try {
+                    return suppPendingMutablePromise.get(retResolution).call(params, innerResStep);
+                } finally {
+                    innerResStep.sync();
+                    resStep.finish();
                 }
-            };
+            }};
         }
     };
     //-----------------------------------------------------------------------------------------------------------------
     private final ReturnSupplier<R, T> suppThenableResolve = new ReturnSupplier<R, T>() {
         @Override Return<T> get(final Return<? extends R> retResolution) {
-            return new Return<T>() {
-                @Override T call(final Params params, final TestStep cbStep, final TestStep resStep) {
-                    return thenableResolve(retResolution, params, cbStep, resStep);
-                }
-            };
+            return new Return<T>() { @Override T call(final Params params, final TestStep resStep) {
+                return thenableResolve(retResolution, params, resStep);
+            }};
         }
     };
     //-----------------------------------------------------------------------------------------------------------------
@@ -121,22 +120,6 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
         return new Executor() {
             @Override public void execute(@Nonnull final Runnable command) { }
         };
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    private static void
-    afterCallback(final ExecutorService exec, final TestStep cbStep, final TestStep... chainResSteps)
-    {
-        if (exec != null)
-            exec.execute(new Runnable() { @Override public void run() {
-                afterCallback(null, cbStep, chainResSteps);
-                exec.shutdown();
-            }});
-        else {
-            for (final TestStep chainResStep : chainResSteps)
-                chainResStep.sync();
-            cbStep.pass();
-            cbStep.finish();
-        }
     }
     //-----------------------------------------------------------------------------------------------------------------
     abstract PromiseFactory<? extends P> promiseFactory();
@@ -175,16 +158,11 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
     //-----------------------------------------------------------------------------------------------------------------
     abstract R alwaysPendingResolution();
     //-----------------------------------------------------------------------------------------------------------------
-    abstract T thenable(final T thenable, final TestStep cbStep, final TestStep resStep);
+    abstract T thenable(final T thenable, final TestStep resStep);
     //-----------------------------------------------------------------------------------------------------------------
     abstract T thenableNop();
     //-----------------------------------------------------------------------------------------------------------------
-    abstract T thenableResolve(
-        final Return<? extends R> retResolution,
-        final Params params,
-        final TestStep cbStep,
-        final TestStep resStep
-    );
+    abstract T thenableResolve(final Return<? extends R> retResolution, final Params params, final TestStep resStep);
     //-----------------------------------------------------------------------------------------------------------------
     abstract T thenableResolve(final Object value);
     //-----------------------------------------------------------------------------------------------------------------
@@ -235,8 +213,7 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
     //-----------------------------------------------------------------------------------------------------------------
     private <E> Return<E> retNoWait(final E ret)
     {
-        return new Return<E>() { @Override E call(final Params params, final TestStep cbStep, final TestStep resStep) {
-            cbStep.pause();
+        return new Return<E>() { @Override E call(final Params params, final TestStep resStep) {
             resStep.finish();
             return ret;
         }};
@@ -244,19 +221,16 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
     //-----------------------------------------------------------------------------------------------------------------
     private Return<R> retThrowException(final Throwable exception)
     {
-        return new Return<R>() {
-            @Override R call(final Params params, final TestStep cbStep, final TestStep resStep) throws Throwable {
-                cbStep.pause();
-                resStep.finish();
-                throw exception;
-            }
-        };
+        return new Return<R>() { @Override R call(final Params params, final TestStep resStep) throws Throwable {
+            resStep.finish();
+            throw exception;
+        }};
     }
     //-----------------------------------------------------------------------------------------------------------------
     private Return<T> retThenable(final T thenable)
     {
-        return new Return<T>() { @Override T call(final Params params, final TestStep cbStep, final TestStep resStep) {
-            return thenable(thenable, cbStep, resStep);
+        return new Return<T>() { @Override T call(final Params params, final TestStep resStep) {
+            return thenable(thenable, resStep);
         }};
     }
     //-----------------------------------------------------------------------------------------------------------------
@@ -269,7 +243,7 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
     //-----------------------------------------------------------------------------------------------------------------
     abstract class Return<E>
     {
-        abstract E call(final Params params, final TestStep cbStep, final TestStep resStep) throws Throwable;
+        abstract E call(final Params params, final TestStep resStep) throws Throwable;
     }
     //-----------------------------------------------------------------------------------------------------------------
     private abstract class ReturnSupplier<TI, TO>
@@ -332,6 +306,8 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
         @Injectable ResolveAction resolveActionMock = null;
         @Injectable FR1<Object, R> unusedOnFulfilled = null;
         @Injectable FR2<Object, Throwable, R> unusedOnRejected = null;
+        @Injectable FR2<TestStep, Object, R> unusedOnFulfilledWithResStep = null;
+        @Injectable FR3<TestStep, Object, Throwable, R> unusedOnRejectedWithResStep = null;
         //-------------------------------------------------------------------------------------------------------------
         final Object[][] paramsFulfilled() { return new Object[][] {
             {originPromiseFactory(), "ORIGIN",    null},
@@ -499,8 +475,8 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
             final Class<?> expectedExceptionClass
         ) throws Throwable
         {
-            final TestStep step = new TestStep();
-            final P promise = suppPromise.get(retResolution).call(this, new TestStep().pass(), step);
+            final TestStep promiseStep = new TestStep();
+            final P promise = suppPromise.get(retResolution).call(this, promiseStep);
 
             final Matcher<P> resolveMatcher
                 = promiseMatcher("MUTABLE", expectedState, expectedValue, expectedReason, expectedExceptionClass);
@@ -510,7 +486,7 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
                 : resolveMatcher;
 
             assertThat(promise, presyncMatcher);
-            step.sync();
+            promiseStep.sync();
             assertThat(promise, resolveMatcher);
 
             new FullVerificationsInOrder() {};
@@ -633,7 +609,7 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
             if (!isResolved || expectedState == PromiseState.PENDING)
                 threadStep.pass();
 
-            final P promise = suppPromise.get(retResolution).call(this, new TestStep().pass(), promiseStep);
+            final P promise = suppPromise.get(retResolution).call(this, promiseStep);
 
             final Thread testThread = Thread.currentThread();
 
@@ -720,7 +696,7 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
             if (!isResolved || expectedState == PromiseState.PENDING)
                 threadStep.pass();
 
-            final P promise = suppPromise.get(retResolution).call(this, new TestStep().pass(), promiseStep);
+            final P promise = suppPromise.get(retResolution).call(this, promiseStep);
 
             new Thread() { @Override public void run() {
                 threadStep.pause();
@@ -888,9 +864,9 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
             final Class<?> expectedExceptionClass
         ) throws Throwable
         {
-            final TestStep step = new TestStep();
+            final TestStep promiseStep = new TestStep();
 
-            final P promise = suppPromise.get(retResolution).call(this, new TestStep().pass(), step);
+            final P promise = suppPromise.get(retResolution).call(this, promiseStep);
 
             final TP toPromise1 = suppToPromise.get(promise);
 
@@ -910,7 +886,7 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
 
             assertThat(toPromise1, presyncMatcher);
 
-            step.sync();
+            promiseStep.sync();
 
             assertThat(toPromise1, resolveMatcher);
 
@@ -988,7 +964,7 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
             final TestStep promiseStep = new TestStep();
 
             applyResolveAction(
-                suppPromise.get(retResolution).call(this, new TestStep().pass(), promiseStep),
+                suppPromise.get(retResolution).call(this, promiseStep),
                 resolveActionMock
             );
 
@@ -1040,6 +1016,53 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
     //-----------------------------------------------------------------------------------------------------------------
     public class BaseDoThenMethods extends Params
     {
+        //-------------------------------------------------------------------------------------------------------------
+        private P callDoThen(
+            final TestStep outerResStep,
+            final P promise,
+            final ExecutorService exec,
+            final FR2<TestStep, Object, ? extends R> onFulfilled,
+            final FR3<TestStep, Object, Throwable, ? extends R> onRejected
+        ) {
+            final TestStep innerResStep = new TestStep();
+
+            final Runnable callbackInvoked = new Runnable() { @Override public void run() {
+                final ExecutorService finishExec;
+
+                if (exec != null) {
+                    outerResStep.pause();
+                    finishExec = exec;
+                } else
+                    finishExec = Executors.newSingleThreadExecutor();
+
+                finishExec.execute(new Runnable() { @Override public void run() {
+                    innerResStep.waitFinished();
+                    outerResStep.finish();
+                    finishExec.shutdown();
+                }});
+            }};
+
+            try {
+                return doThen(
+                    promise,
+                    exec,
+                    new FR1<Object, R>() {
+                        @Override public R call(final Object value) throws Throwable {
+                            callbackInvoked.run();
+                            return onFulfilled.call(innerResStep, value);
+                        }
+                    },
+                    new FR2<Object, Throwable, R>() {
+                        @Override public R call(final Object reason, final Throwable exception) throws Throwable {
+                            callbackInvoked.run();
+                            return onRejected.call(innerResStep, reason, exception);
+                        }
+                    }
+                );
+            } finally {
+                innerResStep.pass();
+            }
+        }
         //-------------------------------------------------------------------------------------------------------------
         private Object[][] paramsExecutorSupplierPrepend() { return new Object[][] {
             {ExecutorSupplier.forResolveBeforeCallback},
@@ -1099,26 +1122,26 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
             final Class<?> expectedExceptionClass
         ) {
             final ExecutorService exec = suppExec.executor();
-            final TestStep callbackStep = new TestStep();
-            final TestStep resolveStep = new TestStep();
+            final TestStep resolutionStep = new TestStep();
             final Return<? extends R> retCallbackReturn = suppCallbackReturn.get(retResolution);
 
-            final P promise = doThen(
+            final P promise = callDoThen(
+                resolutionStep,
                 srcPromiseFactory.fulfilledPromise(fulfilledValue),
                 exec,
-                new FR1<Object, R>() { @Override public R call(final Object value) throws Throwable {
-                    callbackMock.onFulfilled("test", Thread.currentThread(), value);
-                    afterCallback(exec, callbackStep);
-                    return retCallbackReturn.call(BaseDoThenMethods.this, callbackStep, resolveStep);
-                }},
-                unusedOnRejected
+                new FR2<TestStep, Object, R>() {
+                    @Override public R call(final TestStep resStep, final Object value) throws Throwable {
+                        callbackMock.onFulfilled("test", Thread.currentThread(), value);
+                        return retCallbackReturn.call(BaseDoThenMethods.this, resStep);
+                    }
+                },
+                unusedOnRejectedWithResStep
             );
 
             if (exec != null)
                 assertThat(promise, promiseMatcher("MUTABLE", PromiseState.PENDING, null, null, null));
 
-            callbackStep.sync();
-            resolveStep.sync();
+            resolutionStep.sync();
 
             assertThat(
                 promise,
@@ -1183,22 +1206,20 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
             final Class<?> expectedExceptionClass
         ) {
             final ExecutorService exec = suppExec.executor();
-            final TestStep callbackStep = new TestStep();
-            final TestStep resolveStep = new TestStep();
+            final TestStep resolutionStep = new TestStep();
             final Return<? extends R> retCallbackReturn = suppCallbackReturn.get(retResolution);
 
-            final P promise = doThen(
+            final P promise = callDoThen(
+                resolutionStep,
                 promiseFactory().rejectedPromise(rejectedReason, rejectedException),
                 exec,
-                unusedOnFulfilled,
-                new FR2<Object, Throwable, R>()
-                {
-                    @Override
-                    public R call(final Object reason, final Throwable exception) throws Throwable
+                unusedOnFulfilledWithResStep,
+                new FR3<TestStep, Object, Throwable, R>() {
+                    @Override public R call(final TestStep resStep, final Object reason, final Throwable exception)
+                        throws Throwable
                     {
                         callbackMock.onRejected("test", Thread.currentThread(), reason, exception);
-                        afterCallback(exec, callbackStep);
-                        return retCallbackReturn.call(BaseDoThenMethods.this, callbackStep, resolveStep);
+                        return retCallbackReturn.call(BaseDoThenMethods.this, resStep);
                     }
                 }
             );
@@ -1206,8 +1227,7 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
             if (exec != null)
                 assertThat(promise, promiseMatcher("MUTABLE", PromiseState.PENDING, null, null, null));
 
-            callbackStep.sync();
-            resolveStep.sync();
+            resolutionStep.sync();
 
             assertThat(
                 promise,
@@ -1282,11 +1302,11 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
             final Class<?> expectedExceptionClass
         ) throws Throwable
         {
-            final TestStep step = new TestStep();
+            final TestStep promiseStep = new TestStep();
             final ExecutorService exec = Executors.newSingleThreadExecutor();
 
             final P promise = doThen(
-                suppSrcPromise.get(retResolution).call(this, new TestStep().pass(), step),
+                suppSrcPromise.get(retResolution).call(this, promiseStep),
                 exec, null, unusedOnRejected
             );
 
@@ -1301,7 +1321,7 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
                     = promiseMatcher("FULFILLED", PromiseState.FULFILLED, expectedValue, null, null);
 
             assertThat(promise, presyncMatcher);
-            step.sync();
+            promiseStep.sync();
             assertThat(promise, resolveMatcher);
 
             exec.shutdown();
@@ -1329,11 +1349,11 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
             final Class<?> expectedExceptionClass
         ) throws Throwable
         {
-            final TestStep step = new TestStep();
+            final TestStep promiseStep = new TestStep();
             final ExecutorService exec = Executors.newSingleThreadExecutor();
 
             final P promise = doThen(
-                suppSrcPromise.get(retResolution).call(this, new TestStep().pass(), step),
+                suppSrcPromise.get(retResolution).call(this, promiseStep),
                 exec, unusedOnFulfilled, null
             );
 
@@ -1350,7 +1370,7 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
                     = promiseMatcher("REJECTED", PromiseState.REJECTED, null, expectedReason, expectedExceptionClass);
 
             assertThat(promise, presyncMatcher);
-            step.sync();
+            promiseStep.sync();
             assertThat(promise, resolveMatcher);
 
             exec.shutdown();
@@ -1378,11 +1398,11 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
             final Class<?> expectedExceptionClass
         ) throws Throwable
         {
-            final TestStep step = new TestStep();
+            final TestStep promiseStep = new TestStep();
             final ExecutorService exec = Executors.newSingleThreadExecutor();
 
             final P promise = doThen(
-                suppSrcPromise.get(retResolution).call(this, new TestStep().pass(), step),
+                suppSrcPromise.get(retResolution).call(this, promiseStep),
                 exec, unusedOnFulfilled, unusedOnRejected
             );
 
@@ -1391,7 +1411,7 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
 
             assertThat(promise, promiseMatcher(promiseType, PromiseState.PENDING, null, null, null));
 
-            step.sync();
+            promiseStep.sync();
 
             assertThat(promise, promiseMatcher(promiseType, PromiseState.PENDING, null, null, null));
 
@@ -1421,30 +1441,24 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
         {
             final Return<? extends R> retCallbackReturn = suppCallbackReturn.get(retResolution);
             final TestStep srcPromiseStep = new TestStep();
-            final TestStep callbackStep = new TestStep();
-            final TestStep resolveStep = new TestStep();
+            final TestStep resolutionStep = new TestStep();
 
-            final P promise = doThen(
-                retSrcPromise.call(this, new TestStep().pass(), srcPromiseStep),
+            final P promise = callDoThen(
+                resolutionStep,
+                retSrcPromise.call(this, srcPromiseStep),
                 exec,
-                new FR1<Object, R>()
-                {
-                    @Override
-                    public R call(final Object value) throws Throwable
-                    {
+                new FR2<TestStep, Object, R>() {
+                    @Override public R call(final TestStep resStep, final Object value) throws Throwable {
                         callbackMock.onFulfilled(id, Thread.currentThread(), value);
-                        afterCallback(exec, callbackStep);
-                        return retCallbackReturn.call(BaseDoThenMethods.this, callbackStep, resolveStep);
+                        return retCallbackReturn.call(BaseDoThenMethods.this, resStep);
                     }
                 },
-                new FR2<Object, Throwable, R>()
-                {
-                    @Override
-                    public R call(final Object reason, final Throwable exception) throws Throwable
+                new FR3<TestStep, Object, Throwable, R>() {
+                    @Override public R call(final TestStep resStep, final Object reason, final Throwable exception)
+                        throws Throwable
                     {
                         callbackMock.onRejected(id, Thread.currentThread(), reason, exception);
-                        afterCallback(exec, callbackStep);
-                        return retCallbackReturn.call(BaseDoThenMethods.this, callbackStep, resolveStep);
+                        return retCallbackReturn.call(BaseDoThenMethods.this, resStep);
                     }
                 }
             );
@@ -1453,8 +1467,7 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
                 assertThat(promise, promiseMatcher("MUTABLE", PromiseState.PENDING, null, null, null));
 
             srcPromiseStep.sync();
-            callbackStep.sync();
-            resolveStep.sync();
+            resolutionStep.sync();
 
             assertThat(
                 promise,
@@ -1573,25 +1586,23 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
             final Class<?> expectedExceptionClass
         ) throws Throwable
         {
-            final TestStep resolveStep = new TestStep();
+            final TestStep resolutionStep = new TestStep();
             final Return<? extends R> retCallbackReturn = suppCallbackReturn.get(retResolution);
 
-            final P promise = doThen(
+            final P promise = callDoThen(
+                resolutionStep,
                 promiseFactory().fulfilledPromise("test"),
                 null,
-                new FR1<Object, R>()
-                {
-                    @Override
-                    public R call(final Object value) throws Throwable
-                    {
+                new FR2<TestStep, Object, R>() {
+                    @Override public R call(final TestStep resStep, final Object value) throws Throwable {
                         callbackMock.onFulfilled("test", Thread.currentThread(), value);
-                        return retCallbackReturn.call(BaseDoThenMethods.this, new TestStep().pass(), resolveStep);
+                        return retCallbackReturn.call(BaseDoThenMethods.this, resStep);
                     }
                 },
-                unusedOnRejected
+                unusedOnRejectedWithResStep
             );
 
-            resolveStep.sync();
+            resolutionStep.sync();
 
             assertThat(
                 promise,
@@ -1658,7 +1669,7 @@ public abstract class BasePromiseTest<R, P extends R, T extends R>
             final TestStep execStep2 = new TestStep();
 
             final P srcPromise = suppPendingMutablePromise.get(retNoWait(srcPromiseResolution))
-                .call(this, new TestStep().pass(), srcPromiseStep);
+                .call(this, srcPromiseStep);
 
             final R resolution0 = fulfilledResolution(123);
 

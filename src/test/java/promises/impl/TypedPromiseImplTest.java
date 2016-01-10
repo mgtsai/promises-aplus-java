@@ -154,11 +154,10 @@ public final class TypedPromiseImplTest
     }
     //-----------------------------------------------------------------------------------------------------------------
     private static <V, R> Thenable<V, R>
-    doThenable(final Thenable<V, R> thenable, final TestStep cbStep, final TestStep resStep)
+    doThenable(final Thenable<V, R> thenable, final TestStep resStep)
     {
         return new Thenable<V, R>() {
             @Override public void then(final ResolvePromise<V, R> resP, final RejectPromise<R> rejP) throws Throwable {
-                cbStep.pause();
                 thenable.then(resP, rejP);
                 resStep.finish();
             }
@@ -166,9 +165,9 @@ public final class TypedPromiseImplTest
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
-    final Thenable<?, ?> thenable(final Thenable<?, ?> thenable, final TestStep cbStep, final TestStep resStep)
+    final Thenable<?, ?> thenable(final Thenable<?, ?> thenable, final TestStep resStep)
     {
-        return doThenable(thenable, cbStep, resStep);
+        return doThenable(thenable, resStep);
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
@@ -183,13 +182,12 @@ public final class TypedPromiseImplTest
     final Thenable<?, ?> thenableResolve(
         final Return<? extends Resolution<?, ?>> retResolution,
         final Params params,
-        final TestStep cbStep,
         final TestStep resStep
     ) {
         return new Thenable<Object, Object>() {
             @Override public void
             then(final ResolvePromise<Object, Object> resP, final RejectPromise<Object> rejP) throws Throwable {
-                resP.resolve(retResolution.call(params, cbStep, resStep));
+                resP.resolve(retResolution.call(params, resStep));
             }
         };
     }

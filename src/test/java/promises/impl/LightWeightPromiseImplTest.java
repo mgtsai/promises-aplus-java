@@ -149,19 +149,18 @@ public final class LightWeightPromiseImplTest extends BasePromiseTest<RV<?>, Lig
     }
     //-----------------------------------------------------------------------------------------------------------------
     private static <V> Thenable<V>
-    doThenable(final Thenable<V> thenable, final TestStep cbStep, final TestStep resStep)
+    doThenable(final Thenable<V> thenable, final TestStep resStep)
     {
         return new Thenable<V>() { @Override public void then(final ResP<V> resP, final RejP rejP) throws Throwable {
-            cbStep.pause();
             thenable.then(resP, rejP);
             resStep.finish();
         }};
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
-    final Thenable<?> thenable(final Thenable<?> thenable, final TestStep cbStep, final TestStep resStep)
+    final Thenable<?> thenable(final Thenable<?> thenable, final TestStep resStep)
     {
-        return doThenable(thenable, cbStep, resStep);
+        return doThenable(thenable, resStep);
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
@@ -173,15 +172,12 @@ public final class LightWeightPromiseImplTest extends BasePromiseTest<RV<?>, Lig
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
-    final Thenable<?> thenableResolve(
-        final Return<? extends RV<?>> retResolution,
-        final Params params,
-        final TestStep cbStep,
-        final TestStep resStep
-    ) {
+    final Thenable<?>
+    thenableResolve(final Return<? extends RV<?>> retResolution, final Params params, final TestStep resStep)
+    {
         return new Thenable<Object>() {
             @Override public void then(final ResP<Object> resP, final RejP rejP) throws Throwable {
-                resP.resolve(retResolution.call(params, cbStep, resStep));
+                resP.resolve(retResolution.call(params, resStep));
             }
         };
     }
