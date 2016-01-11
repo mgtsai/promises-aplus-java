@@ -7,15 +7,13 @@ package promises.impl;
 import promises.InternalException;
 import promises.PromiseRejectedException;
 import promises.PromiseState;
-import javax.annotation.Nonnull;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 //---------------------------------------------------------------------------------------------------------------------
-final class PromiseStore implements Executor, ResolveAction
+final class PromiseStore implements ResolveAction
 {
     //-----------------------------------------------------------------------------------------------------------------
     private final CountDownLatch waitUntilResolved = new CountDownLatch(1);
@@ -25,7 +23,7 @@ final class PromiseStore implements Executor, ResolveAction
     Object reason = null;
     Throwable exception = null;
     private LinkedList<ResolveAction> pendingActionQ = null;
-    private ArrayList<Runnable> blockingCommandQ = null;
+    private BlockingCommandQueue blockingCommandQ = null;
     //-----------------------------------------------------------------------------------------------------------------
     final Object await(final Object promise) throws InterruptedException, PromiseRejectedException
     {
@@ -200,13 +198,12 @@ final class PromiseStore implements Executor, ResolveAction
         );
     }
     //-----------------------------------------------------------------------------------------------------------------
-    @Override
-    public final void execute(@Nonnull final Runnable command)
+    public final Executor executor()
     {
         if (blockingCommandQ == null)
-            blockingCommandQ = new ArrayList<Runnable>();
+            blockingCommandQ = new BlockingCommandQueue();
 
-        blockingCommandQ.add(command);
+        return blockingCommandQ;
     }
     //-----------------------------------------------------------------------------------------------------------------
     private synchronized ResolveAction nextPendingAction()
@@ -216,15 +213,6 @@ final class PromiseStore implements Executor, ResolveAction
         else {
             pendingActionQ = null;
             return null;
-        }
-    }
-    //-----------------------------------------------------------------------------------------------------------------
-    private void runBlockingCommands()
-    {
-        if (blockingCommandQ != null) {
-            for (final Runnable command : blockingCommandQ)
-                command.run();
-            blockingCommandQ = null;
         }
     }
     //-----------------------------------------------------------------------------------------------------------------
@@ -274,7 +262,10 @@ final class PromiseStore implements Executor, ResolveAction
             action = nextPendingAction();
         } while (action != null);
 
-        runBlockingCommands();
+        if (blockingCommandQ != null) {
+            blockingCommandQ.runBlockingCommands();
+            blockingCommandQ = null;
+        }
     }
     //-----------------------------------------------------------------------------------------------------------------
     @Override
@@ -305,7 +296,10 @@ final class PromiseStore implements Executor, ResolveAction
             action = nextPendingAction();
         } while (action != null);
 
-        runBlockingCommands();
+        if (blockingCommandQ != null) {
+            blockingCommandQ.runBlockingCommands();
+            blockingCommandQ = null;
+        }
     }
     //-----------------------------------------------------------------------------------------------------------------
 }

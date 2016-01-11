@@ -66,7 +66,7 @@ abstract class RejectedResolver<VCI, RCI> extends BaseResolver<VCI, RCI>
             final int onRejStackDiff,
             final ResolveAction resAction
         ) {
-            doExecAndResolve(store, onRejected, onRejStackDiff, store.reason, store.exception, resAction);
+            doExecAndResolve(store.executor(), onRejected, onRejStackDiff, store.reason, store.exception, resAction);
         }
 
         @Override <PO> PO inSyncNonBlockingChainDstPromise(
@@ -166,7 +166,7 @@ abstract class RejectedResolver<VCI, RCI> extends BaseResolver<VCI, RCI>
             final int onRejStackDiff,
             final ResolveAction resAction
         ) {
-            doExecAndResolve(store, onRejected, onRejStackDiff, store.exception, resAction);
+            doExecAndResolve(store.executor(), onRejected, onRejStackDiff, store.exception, resAction);
         }
 
         @Override <PO> PO inSyncNonBlockingChainDstPromise(

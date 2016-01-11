@@ -64,7 +64,7 @@ abstract class FulfilledResolver<VCI, RCI> extends BaseResolver<VCI, RCI>
             final int onFulStackDiff,
             final ResolveAction resAction
         ) {
-            doExecAndResolve(store, onFulfilled, onFulStackDiff, store.value, resAction);
+            doExecAndResolve(store.executor(), onFulfilled, onFulStackDiff, store.value, resAction);
         }
 
         @Override <PO> PO inSyncNonBlockingChainDstPromise(
